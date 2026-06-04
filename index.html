@@ -595,7 +595,7 @@
             <div class="card-media-wrap${hasMedia ? '' : ' empty'}">
               <div class="card-media-inner">
                 ${mediaTag(card)}
-                ${!hasMedia ? `<div class="media-hint"><i class="ti ti-photo" aria-hidden="true"></i><span class="label">Image / GIF</span><span class="sublabel">drag &amp; drop or click</span></div>` : ''}
+                ${!hasMedia ? `<div class="media-hint"><i class="ti ti-photo" aria-hidden="true"></i><span class="label">Image / GIF</span><span class="sublabel">drag &amp; drop · click · paste</span></div>` : ''}
               </div>
               <div class="drop-zone" data-cardid="${card.id}" onclick="document.getElementById('file-${card.id}').click()">
                 <div class="drop-zone-icon"><i class="ti ti-pencil" aria-hidden="true"></i></div>
@@ -706,6 +706,57 @@
       btn.disabled = false;
       btn.innerHTML = '<i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF';
     }
+
+    // ── Paste from clipboard (Ctrl+V / Cmd+V) ──
+    // Tracks which card the user last interacted with
+    let focusedCardId = null;
+
+    document.addEventListener('focusin', e => {
+      const card = e.target.closest('.card');
+      if (card) focusedCardId = parseInt(card.dataset.id);
+    });
+    document.addEventListener('click', e => {
+      const card = e.target.closest('.card');
+      if (card) focusedCardId = parseInt(card.dataset.id);
+    });
+
+    document.addEventListener('paste', async e => {
+      // Only active on the board screen
+      if (!activeId) return;
+      const p = activeProject();
+      if (!p || p.cards.length === 0) return;
+
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+
+      // Find an image in the clipboard
+      let imageItem = null;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) { imageItem = item; break; }
+      }
+      if (!imageItem) return;
+
+      e.preventDefault();
+
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      // Use focused card, or last card, or first card
+      let targetId = focusedCardId;
+      if (!targetId || !p.cards.find(c => c.id === targetId)) {
+        targetId = p.cards[p.cards.length - 1].id;
+      }
+
+      // Flash the target card to show where it's going
+      const cardEl = document.querySelector(`.card[data-id="${targetId}"]`);
+      if (cardEl) {
+        cardEl.style.outline = '2px solid var(--drag-border)';
+        cardEl.style.outlineOffset = '2px';
+        setTimeout(() => { cardEl.style.outline = ''; cardEl.style.outlineOffset = ''; }, 800);
+      }
+
+      await handleFile(targetId, file);
+    });
 
     // ── Init ──
     load();
