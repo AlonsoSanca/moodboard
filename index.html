@@ -17,33 +17,33 @@
       --bg: #f9f8f6;
       --surface: #ffffff;
       --surface-2: #f2f0ec;
-      --border: rgba(0,0,0,0.10);
-      --border-mid: rgba(0,0,0,0.18);
-      --border-strong: rgba(0,0,0,0.28);
+      --border: rgba(0,0,0,0.09);
+      --border-mid: rgba(0,0,0,0.16);
+      --border-strong: rgba(0,0,0,0.26);
       --text-primary: #1a1a18;
       --text-secondary: #6b6a66;
       --text-hint: #a8a7a2;
-      --drag-bg: #eaf3ff;
+      --drag-bg: rgba(59,130,246,0.08);
       --drag-border: #3b82f6;
       --drag-text: #1d4ed8;
       --danger: #c0392b;
       --danger-bg: #fdecea;
       --radius-md: 8px;
       --radius-lg: 12px;
+      --radius-xl: 16px;
     }
-
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #141413;
         --surface: #1e1e1c;
         --surface-2: #272724;
-        --border: rgba(255,255,255,0.08);
-        --border-mid: rgba(255,255,255,0.14);
+        --border: rgba(255,255,255,0.07);
+        --border-mid: rgba(255,255,255,0.13);
         --border-strong: rgba(255,255,255,0.22);
         --text-primary: #f0efe9;
         --text-secondary: #a8a7a0;
         --text-hint: #5c5b57;
-        --drag-bg: #1a2540;
+        --drag-bg: rgba(96,165,250,0.1);
         --drag-border: #60a5fa;
         --drag-text: #93c5fd;
         --danger: #e57373;
@@ -56,37 +56,33 @@
       background: var(--bg);
       color: var(--text-primary);
       min-height: 100vh;
-      padding: 2rem 1.5rem 4rem;
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 1200px;
-      margin: 0 auto 2rem;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+    /* ── SCREENS ── */
+    .screen { display: none; padding: 2rem 1.5rem 4rem; }
+    .screen.active { display: block; }
 
+    /* ── SHARED HEADER ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1200px; margin: 0 auto 2rem; gap: 12px; flex-wrap: wrap;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
     .wordmark {
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      font-weight: 400;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 400;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-secondary);
+      cursor: pointer; text-decoration: none;
     }
-
-    .header-actions { display: flex; align-items: center; gap: 10px; }
-
+    .breadcrumb-sep { color: var(--text-hint); font-size: 14px; }
+    .project-name-label {
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      letter-spacing: 0.1em; color: var(--text-primary);
+    }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
     .save-indicator {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: var(--text-hint);
-      opacity: 0;
-      transition: opacity 0.4s;
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      letter-spacing: 0.1em; color: var(--text-hint);
+      opacity: 0; transition: opacity 0.4s;
     }
     .save-indicator.visible { opacity: 1; }
 
@@ -100,9 +96,119 @@
       white-space: nowrap;
     }
     .btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn i { font-size: 15px; }
+    .btn.danger { color: var(--danger); }
+    .btn.danger:hover { background: var(--danger-bg); border-color: var(--danger); }
 
+    /* ── HOME SCREEN ── */
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+      animation: cardIn 0.2s ease forwards;
+      position: relative;
+    }
+    .project-card:hover { border-color: var(--border-mid); transform: translateY(-2px); }
+
+    .project-thumb {
+      width: 100%; aspect-ratio: 16/9;
+      background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    .project-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .project-thumb-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      width: 100%; height: 100%; gap: 1px;
+    }
+    .project-thumb-grid span {
+      background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .project-thumb-grid span img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .project-thumb-empty i { font-size: 24px; color: var(--text-hint); }
+
+    .project-card-body { padding: 12px 14px; }
+    .project-card-title {
+      font-size: 14px; font-weight: 500; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .project-card-meta {
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      color: var(--text-hint); letter-spacing: 0.06em;
+    }
+
+    .project-card-del {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--surface); border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-md); padding: 5px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s;
+      color: var(--text-hint); font-size: 14px;
+    }
+    .project-card:hover .project-card-del { opacity: 1; }
+    .project-card-del:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+    .new-project-card {
+      background: transparent;
+      border: 0.5px dashed var(--border-mid);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; padding: 2.5rem 1rem;
+      color: var(--text-hint);
+      animation: cardIn 0.2s ease forwards;
+      min-height: 160px;
+    }
+    .new-project-card:hover { border-color: var(--border-strong); background: var(--surface); color: var(--text-secondary); }
+    .new-project-card i { font-size: 22px; }
+    .new-project-card span { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* modal */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 0.5px solid var(--border-mid);
+      border-radius: var(--radius-xl); padding: 28px;
+      width: 360px; max-width: calc(100vw - 2rem);
+      transform: translateY(8px); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 16px; }
+    .modal input {
+      width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px;
+      color: var(--text-primary); background: var(--surface-2);
+      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
+      padding: 10px 14px; outline: none; transition: border-color 0.15s;
+      margin-bottom: 16px;
+    }
+    .modal input:focus { border-color: var(--border-strong); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* ── BOARD SCREEN ── */
     .board {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -111,24 +217,23 @@
       margin: 0 auto;
     }
 
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     .card {
       background: var(--surface);
       border: 0.5px solid var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       transition: border-color 0.15s;
-      animation: cardIn 0.25s ease forwards;
+      animation: cardIn 0.22s ease forwards;
     }
     .card:hover { border-color: var(--border-mid); }
 
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* The drop zone sits as a sibling layer — always on top, never blocks pointer when idle */
+    /* ── MEDIA AREA — adapts to image ratio ── */
     .card-media-wrap {
       position: relative;
       width: 100%;
@@ -136,284 +241,355 @@
       border-bottom: 0.5px solid var(--border);
       overflow: hidden;
     }
-
-    /* placeholder state: fixed ratio when no image yet */
+    /* placeholder keeps 16:9 until image loaded */
     .card-media-wrap.empty {
       aspect-ratio: 16/9;
     }
 
-    /* actual media content */
     .card-media-inner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 8px;
       width: 100%;
+      display: block;
+      line-height: 0;
     }
-
-    /* placeholder inner is absolutely positioned inside the fixed-ratio wrap */
     .card-media-wrap.empty .card-media-inner {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
     }
 
+    /* Key: img/video sit in normal flow, no absolute positioning */
     .card-media-inner img,
     .card-media-inner video {
       display: block;
       width: 100%;
       height: auto;
-      object-fit: contain;
     }
 
     .media-hint {
       display: flex; flex-direction: column; align-items: center; gap: 5px;
-      pointer-events: none; z-index: 1; transition: opacity 0.15s;
+      pointer-events: none;
     }
     .media-hint i { font-size: 24px; color: var(--text-hint); }
-    .media-hint .label {
-      font-size: 11px; color: var(--text-hint);
-      font-family: 'DM Mono', monospace; letter-spacing: 0.08em;
-    }
-    .media-hint .sublabel {
-      font-size: 10px; color: var(--text-hint);
-      font-family: 'DM Mono', monospace; letter-spacing: 0.06em; opacity: 0.65;
-    }
+    .media-hint .label { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
+    .media-hint .sublabel { font-size: 10px; color: var(--text-hint); font-family: 'DM Mono', monospace; letter-spacing: 0.06em; opacity: 0.65; }
 
-    /* The invisible drop zone — covers the whole media area, always on top */
+    /* drop zone: absolute so it always covers whatever height the image creates */
     .drop-zone {
-      position: absolute;
-      inset: 0;
-      z-index: 10;
-      cursor: pointer;
-      transition: background 0.15s;
+      position: absolute; inset: 0; z-index: 10;
+      cursor: pointer; transition: background 0.15s;
     }
-    .drop-zone:hover { background: rgba(0,0,0,0.28); }
-    .card-media-wrap.empty .drop-zone:hover { background: rgba(0,0,0,0.06); }
-    .drop-zone.drag-over {
-      background: var(--drag-bg) !important;
-      outline: 2px dashed var(--drag-border);
-      outline-offset: -3px;
-    }
+    .drop-zone:hover { background: rgba(0,0,0,0.26); }
+    .card-media-wrap.empty .drop-zone:hover { background: rgba(0,0,0,0.04); }
+    .drop-zone.drag-over { background: var(--drag-bg) !important; outline: 2px dashed var(--drag-border); outline-offset: -3px; }
 
-    /* pencil icon shown on hover */
     .drop-zone-icon {
-      position: absolute;
-      inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.2s;
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
     .card-media-wrap:not(.empty) .drop-zone:hover .drop-zone-icon { opacity: 1; }
     .drop-zone-icon i { font-size: 20px; color: #fff; }
 
     .drag-over-label {
-      position: absolute;
-      inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 6px;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.15s;
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 6px;
+      opacity: 0; pointer-events: none; transition: opacity 0.15s;
     }
     .drop-zone.drag-over .drag-over-label { opacity: 1; }
-    .drop-zone.drag-over .drop-zone-icon { opacity: 0; }
     .drag-over-label i { font-size: 26px; color: var(--drag-text); }
-    .drag-over-label span {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      color: var(--drag-text); letter-spacing: 0.08em;
-    }
+    .drag-over-label span { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--drag-text); letter-spacing: 0.08em; }
 
     .hidden-input { display: none; }
 
     .card-fields { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
     .field { display: flex; flex-direction: column; gap: 4px; }
-    .field-label {
-      font-family: 'DM Mono', monospace; font-size: 10px;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--text-hint); font-weight: 400;
-    }
+    .field-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-hint); font-weight: 400; }
     .field input, .field textarea {
       font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-primary);
-      background: transparent; border: none;
-      border-bottom: 0.5px solid var(--border); border-radius: 0;
-      padding: 4px 0; outline: none; width: 100%;
+      background: transparent; border: none; border-bottom: 0.5px solid var(--border);
+      border-radius: 0; padding: 4px 0; outline: none; width: 100%;
       transition: border-color 0.15s; resize: none; line-height: 1.55;
     }
     .field input::placeholder, .field textarea::placeholder { color: var(--text-hint); font-style: italic; }
     .field input:focus, .field textarea:focus { border-bottom-color: var(--border-strong); }
 
-    .card-footer {
-      padding: 10px 16px; border-top: 0.5px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .card-num {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      color: var(--text-hint); letter-spacing: 0.08em;
-    }
-    .remove-btn {
-      background: none; border: none; cursor: pointer; padding: 5px;
-      color: var(--text-hint); border-radius: var(--radius-md);
-      display: flex; align-items: center; font-size: 15px;
-      transition: color 0.15s, background 0.15s;
-    }
+    .card-footer { padding: 10px 16px; border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); letter-spacing: 0.08em; }
+    .remove-btn { background: none; border: none; cursor: pointer; padding: 5px; color: var(--text-hint); border-radius: var(--radius-md); display: flex; align-items: center; font-size: 15px; transition: color 0.15s, background 0.15s; }
     .remove-btn:hover { color: var(--danger); background: var(--danger-bg); }
 
-    .empty-state {
-      grid-column: 1 / -1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 10px;
-      padding: 5rem 1rem; color: var(--text-hint);
-      border: 0.5px dashed var(--border-mid); border-radius: var(--radius-lg);
-    }
+    .empty-state { grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 5rem 1rem; color: var(--text-hint); border: 0.5px dashed var(--border-mid); border-radius: var(--radius-lg); }
     .empty-state i { font-size: 30px; }
     .empty-state span { font-size: 12px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
 
-    /* PDF render surface */
-    #pdf-surface {
-      position: fixed; left: -9999px; top: 0;
-      width: 1080px; background: #ffffff;
-      font-family: 'DM Sans', sans-serif; pointer-events: none;
-    }
+    /* PDF surface */
+    #pdf-surface { position: fixed; left: -9999px; top: 0; width: 1080px; background: #fff; font-family: 'DM Sans', sans-serif; pointer-events: none; }
     .pdf-card { width: 1080px; background: #fff; border: 1px solid #e0ddd8; border-radius: 12px; overflow: hidden; margin-bottom: 32px; }
-    .pdf-card-media { width: 100%; aspect-ratio: 16/9; background: #f2f0ec; position: relative; overflow: hidden; }
-    .pdf-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .pdf-card-media .pdf-no-media { display: flex; align-items: center; justify-content: center; height: 100%; font-family: 'DM Mono', monospace; font-size: 13px; color: #a8a7a2; letter-spacing: 0.08em; }
+    .pdf-card-media { width: 100%; background: #f2f0ec; overflow: hidden; }
+    .pdf-card-media img { width: 100%; height: auto; display: block; }
+    .pdf-card-media .pdf-no-media { display: flex; align-items: center; justify-content: center; aspect-ratio: 16/9; font-family: 'DM Mono', monospace; font-size: 13px; color: #a8a7a2; letter-spacing: 0.08em; }
     .pdf-card-fields { padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; }
     .pdf-field { display: flex; flex-direction: column; gap: 5px; }
     .pdf-field-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #a8a7a2; }
     .pdf-field-value { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #1a1a18; line-height: 1.55; border-bottom: 0.5px solid #e0ddd8; padding-bottom: 6px; min-height: 28px; }
     .pdf-field-value.empty { color: #c8c7c2; font-style: italic; }
-    .pdf-card-footer { padding: 12px 28px; border-top: 0.5px solid #e0ddd8; display: flex; align-items: center; }
+    .pdf-card-footer { padding: 12px 28px; border-top: 0.5px solid #e0ddd8; }
     .pdf-card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: #a8a7a2; letter-spacing: 0.1em; }
 
     @media (max-width: 600px) {
-      body { padding: 1.25rem 1rem 3rem; }
+      body { padding: 0; }
+      .screen { padding: 1.25rem 1rem 3rem; }
       .board { grid-template-columns: 1fr; }
+      .home-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <span class="wordmark">Moodboard</span>
-    <div class="header-actions">
-      <span class="save-indicator" id="save-indicator">saved</span>
-      <button class="btn" id="pdf-btn" onclick="exportPDF()">
-        <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF
-      </button>
-      <button class="btn" onclick="addCard()">
-        <i class="ti ti-plus" aria-hidden="true"></i> Add card
-      </button>
+  <!-- HOME SCREEN -->
+  <div class="screen active" id="screen-home">
+    <div class="topbar">
+      <span class="wordmark">Moodboard</span>
     </div>
-  </header>
+    <div class="home-grid" id="home-grid"></div>
+  </div>
 
-  <div class="board" id="board"></div>
+  <!-- BOARD SCREEN -->
+  <div class="screen" id="screen-board">
+    <div class="topbar">
+      <div class="topbar-left">
+        <a class="wordmark" onclick="goHome()">Moodboard</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="project-name-label" id="board-title-label"></span>
+      </div>
+      <div class="topbar-right">
+        <span class="save-indicator" id="save-indicator">saved</span>
+        <button class="btn" id="pdf-btn" onclick="exportPDF()">
+          <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF
+        </button>
+        <button class="btn" onclick="addCard()">
+          <i class="ti ti-plus" aria-hidden="true"></i> Add card
+        </button>
+      </div>
+    </div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- NEW PROJECT MODAL -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2>New project</h2>
+      <input type="text" id="modal-input" placeholder="Project name…" maxlength="60" />
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn" id="modal-confirm" onclick="confirmNewProject()">Create</button>
+      </div>
+    </div>
+  </div>
+
   <div id="pdf-surface"></div>
 
   <script>
-    const STORAGE_KEY = 'sanca_moodboard_v1';
-    let cards = [];
-    let counter = 0;
+    const DB_KEY = 'sanca_mb_projects_v2';
+
+    // ── State ──
+    let projects = [];   // [{ id, name, cards, counter, createdAt }]
+    let activeId = null; // current project id
     let saveTimer = null;
 
-    function saveToStorage() {
-      const serializable = cards.map(c => ({
-        id: c.id, mediaDataUrl: c.mediaDataUrl || null, mediaType: c.mediaType || null,
-        scene: c.scene, shot: c.shot, dialogue: c.dialogue, description: c.description
-      }));
+    // ── Persistence ──
+    function load() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: serializable, counter }));
-        showSaved();
-      } catch(e) {}
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) projects = JSON.parse(raw);
+      } catch(e) { projects = []; }
     }
 
-    function loadFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        counter = data.counter || 0;
-        cards = (data.cards || []).map(c => ({
-          ...c, media: c.mediaDataUrl ? { url: c.mediaDataUrl, type: c.mediaType } : null
-        }));
-      } catch(e) { cards = []; }
+    function save() {
+      try { localStorage.setItem(DB_KEY, JSON.stringify(projects)); showSaved(); } catch(e) {}
     }
 
     function scheduleSave() {
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveToStorage, 600);
+      saveTimer = setTimeout(save, 600);
     }
 
     function showSaved() {
       const el = document.getElementById('save-indicator');
       if (!el) return;
       el.classList.add('visible');
-      clearTimeout(el._hideTimer);
-      el._hideTimer = setTimeout(() => el.classList.remove('visible'), 1800);
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('visible'), 1800);
     }
 
-    function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+    function getProject(id) { return projects.find(p => p.id === id); }
+
+    // ── Navigation ──
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + id).classList.add('active');
     }
 
-    async function handleFile(id, file) {
-      if (!file) return;
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) return;
-      const dataUrl = await fileToDataUrl(file);
-      const card = cards.find(c => c.id === id);
-      if (!card) return;
-      card.media = { url: dataUrl, type: file.type };
-      card.mediaDataUrl = dataUrl;
-      card.mediaType = file.type;
-      render();
-      scheduleSave();
+    function goHome() {
+      activeId = null;
+      renderHome();
+      showScreen('home');
     }
 
-    function handleMediaInput(id, input) { handleFile(id, input.files[0]); }
+    function openProject(id) {
+      activeId = id;
+      const p = getProject(id);
+      document.getElementById('board-title-label').textContent = p.name;
+      renderBoard();
+      showScreen('board');
+    }
+
+    // ── Home ──
+    function renderHome() {
+      const grid = document.getElementById('home-grid');
+      const cards = projects.map((p, idx) => {
+        const thumbImgs = (p.cards || [])
+          .filter(c => c.mediaDataUrl && !c.mediaType.startsWith('video/'))
+          .slice(0, 4);
+
+        let thumbHTML = '';
+        if (thumbImgs.length === 0) {
+          thumbHTML = `<div class="project-thumb project-thumb-empty"><i class="ti ti-layout-board" aria-hidden="true"></i></div>`;
+        } else if (thumbImgs.length === 1) {
+          thumbHTML = `<div class="project-thumb"><img src="${thumbImgs[0].mediaDataUrl}" alt=""></div>`;
+        } else {
+          const cells = thumbImgs.slice(0, 4).map(c =>
+            `<span><img src="${c.mediaDataUrl}" alt=""></span>`
+          ).join('');
+          thumbHTML = `<div class="project-thumb"><div class="project-thumb-grid">${cells}</div></div>`;
+        }
+
+        const count = (p.cards || []).length;
+        const date = new Date(p.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+
+        return `
+          <div class="project-card" onclick="openProject('${p.id}')" style="animation-delay:${idx * 40}ms">
+            ${thumbHTML}
+            <div class="project-card-body">
+              <div class="project-card-title">${p.name}</div>
+              <div class="project-card-meta">${count} card${count !== 1 ? 's' : ''} · ${date}</div>
+            </div>
+            <button class="project-card-del" onclick="event.stopPropagation(); deleteProject('${p.id}')" aria-label="Delete project">
+              <i class="ti ti-trash" aria-hidden="true"></i>
+            </button>
+          </div>`;
+      }).join('');
+
+      grid.innerHTML = cards + `
+        <div class="new-project-card" onclick="openModal()">
+          <i class="ti ti-plus" aria-hidden="true"></i>
+          <span>New project</span>
+        </div>`;
+    }
+
+    function deleteProject(id) {
+      if (!confirm('Delete this project? This can\'t be undone.')) return;
+      projects = projects.filter(p => p.id !== id);
+      save();
+      renderHome();
+    }
+
+    // ── Modal ──
+    function openModal() {
+      const m = document.getElementById('modal');
+      m.classList.add('open');
+      setTimeout(() => document.getElementById('modal-input').focus(), 50);
+    }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      document.getElementById('modal-input').value = '';
+    }
+    function confirmNewProject() {
+      const name = document.getElementById('modal-input').value.trim();
+      if (!name) return;
+      const id = 'p_' + Date.now();
+      projects.push({ id, name, cards: [], counter: 0, createdAt: Date.now() });
+      save();
+      closeModal();
+      openProject(id);
+    }
+    document.getElementById('modal-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmNewProject();
+      if (e.key === 'Escape') closeModal();
+    });
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal')) closeModal();
+    });
+
+    // ── Board ──
+    function activeProject() { return getProject(activeId); }
 
     function addCard() {
-      counter++;
-      const id = counter;
-      cards.push({ id, media: null, mediaDataUrl: null, mediaType: null, scene: '', shot: '', dialogue: '', description: '' });
-      render();
+      const p = activeProject(); if (!p) return;
+      p.counter++;
+      p.cards.push({ id: p.counter, media: null, mediaDataUrl: null, mediaType: null, scene: '', shot: '', dialogue: '', description: '' });
       scheduleSave();
+      renderBoard();
     }
 
     function removeCard(id) {
-      cards = cards.filter(c => c.id !== id);
-      render();
+      const p = activeProject(); if (!p) return;
+      p.cards = p.cards.filter(c => c.id !== id);
       scheduleSave();
+      renderBoard();
     }
 
-    function update(id, field, value) {
-      const card = cards.find(c => c.id === id);
+    function updateCard(id, field, value) {
+      const p = activeProject(); if (!p) return;
+      const card = p.cards.find(c => c.id === id);
       if (card) { card[field] = value; scheduleSave(); }
     }
 
-    function mediaTag(card) {
-      if (!card.media) return '';
-      const { url, type } = card.media;
-      if (type === 'image/gif') return `<img src="${url}" alt="card media">`;
-      if (type.startsWith('video/')) return `<video src="${url}" autoplay loop muted playsinline></video>`;
-      return `<img src="${url}" alt="card media">`;
+    function fileToDataUrl(file) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
     }
 
-    function render() {
-      const board = document.getElementById('board');
-      if (!board) return;
+    async function handleFile(cardId, file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) return;
+      const p = activeProject(); if (!p) return;
+      const card = p.cards.find(c => c.id === cardId); if (!card) return;
+      const dataUrl = await fileToDataUrl(file);
+      card.media = { url: dataUrl, type: file.type };
+      card.mediaDataUrl = dataUrl;
+      card.mediaType = file.type;
+      scheduleSave();
+      renderBoard();
+    }
 
-      if (cards.length === 0) {
-        board.innerHTML = `<div class="empty-state"><i class="ti ti-layout-board" aria-hidden="true"></i><span>No cards yet — click Add card to start</span></div>`;
+    function handleMediaInput(cardId, input) { handleFile(cardId, input.files[0]); }
+
+    function mediaTag(card) {
+      if (!card.media && !card.mediaDataUrl) return '';
+      const url = card.mediaDataUrl || card.media.url;
+      const type = card.mediaType || card.media.type;
+      if (type === 'image/gif' || type.startsWith('image/')) return `<img src="${url}" alt="card media">`;
+      if (type.startsWith('video/')) return `<video src="${url}" autoplay loop muted playsinline></video>`;
+      return '';
+    }
+
+    function renderBoard() {
+      const p = activeProject();
+      const board = document.getElementById('board');
+      if (!board || !p) return;
+
+      if (p.cards.length === 0) {
+        board.innerHTML = `<div class="empty-state"><i class="ti ti-photo" aria-hidden="true"></i><span>No cards yet — click Add card to start</span></div>`;
         return;
       }
 
-      board.innerHTML = cards.map((card, idx) => {
+      board.innerHTML = p.cards.map((card, idx) => {
         const num = String(idx + 1).padStart(2, '0');
-        const hasMedia = !!card.media;
+        const hasMedia = !!(card.mediaDataUrl || (card.media && card.media.url));
         return `
           <div class="card" data-id="${card.id}">
             <div class="card-media-wrap${hasMedia ? '' : ' empty'}">
@@ -421,31 +597,28 @@
                 ${mediaTag(card)}
                 ${!hasMedia ? `<div class="media-hint"><i class="ti ti-photo" aria-hidden="true"></i><span class="label">Image / GIF</span><span class="sublabel">drag &amp; drop or click</span></div>` : ''}
               </div>
-              <div class="drop-zone" data-id="${card.id}" onclick="document.getElementById('file-${card.id}').click()">
+              <div class="drop-zone" data-cardid="${card.id}" onclick="document.getElementById('file-${card.id}').click()">
                 <div class="drop-zone-icon"><i class="ti ti-pencil" aria-hidden="true"></i></div>
-                <div class="drag-over-label">
-                  <i class="ti ti-upload" aria-hidden="true"></i>
-                  <span>drop to add</span>
-                </div>
+                <div class="drag-over-label"><i class="ti ti-upload" aria-hidden="true"></i><span>drop to add</span></div>
               </div>
             </div>
             <input type="file" id="file-${card.id}" class="hidden-input" accept="image/*,video/*" onchange="handleMediaInput(${card.id}, this)">
             <div class="card-fields">
               <div class="field">
                 <label class="field-label" for="scene-${card.id}">Scene</label>
-                <input type="text" id="scene-${card.id}" placeholder="e.g. Ext. rooftop — dusk" value="${card.scene.replace(/"/g,'&quot;')}" oninput="update(${card.id},'scene',this.value)">
+                <input type="text" id="scene-${card.id}" placeholder="e.g. Ext. rooftop — dusk" value="${(card.scene||'').replace(/"/g,'&quot;')}" oninput="updateCard(${card.id},'scene',this.value)">
               </div>
               <div class="field">
                 <label class="field-label" for="shot-${card.id}">Shot type</label>
-                <input type="text" id="shot-${card.id}" placeholder="e.g. Close-up, wide shot…" value="${card.shot.replace(/"/g,'&quot;')}" oninput="update(${card.id},'shot',this.value)">
+                <input type="text" id="shot-${card.id}" placeholder="e.g. Close-up, wide shot…" value="${(card.shot||'').replace(/"/g,'&quot;')}" oninput="updateCard(${card.id},'shot',this.value)">
               </div>
               <div class="field">
                 <label class="field-label" for="dialogue-${card.id}">Dialogue</label>
-                <textarea id="dialogue-${card.id}" placeholder="Character dialogue or VO…" rows="2" oninput="update(${card.id},'dialogue',this.value)">${card.dialogue}</textarea>
+                <textarea id="dialogue-${card.id}" placeholder="Character dialogue or VO…" rows="2" oninput="updateCard(${card.id},'dialogue',this.value)">${card.dialogue||''}</textarea>
               </div>
               <div class="field">
                 <label class="field-label" for="desc-${card.id}">Description</label>
-                <textarea id="desc-${card.id}" placeholder="Mood, action, notes…" rows="2" oninput="update(${card.id},'description',this.value)">${card.description}</textarea>
+                <textarea id="desc-${card.id}" placeholder="Mood, action, notes…" rows="2" oninput="updateCard(${card.id},'description',this.value)">${card.description||''}</textarea>
               </div>
             </div>
             <div class="card-footer">
@@ -454,41 +627,27 @@
                 <i class="ti ti-trash" aria-hidden="true"></i>
               </button>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
 
-      // Attach drag listeners to every drop-zone after render
-      document.querySelectorAll('.drop-zone').forEach(zone => {
-        const id = parseInt(zone.dataset.id);
-        let dragCounter = 0; // track enters/leaves to avoid flicker on child elements
-
-        zone.addEventListener('dragenter', e => {
-          e.preventDefault();
-          dragCounter++;
-          zone.classList.add('drag-over');
-        });
-        zone.addEventListener('dragover', e => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'copy';
-        });
-        zone.addEventListener('dragleave', e => {
-          dragCounter--;
-          if (dragCounter <= 0) { dragCounter = 0; zone.classList.remove('drag-over'); }
-        });
+      // Attach drag listeners
+      board.querySelectorAll('.drop-zone').forEach(zone => {
+        const cardId = parseInt(zone.dataset.cardid);
+        let dc = 0;
+        zone.addEventListener('dragenter', e => { e.preventDefault(); dc++; zone.classList.add('drag-over'); });
+        zone.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        zone.addEventListener('dragleave', e => { if (--dc <= 0) { dc = 0; zone.classList.remove('drag-over'); } });
         zone.addEventListener('drop', e => {
-          e.preventDefault();
-          dragCounter = 0;
-          zone.classList.remove('drag-over');
-          const file = e.dataTransfer.files[0];
-          if (file) handleFile(id, file);
+          e.preventDefault(); dc = 0; zone.classList.remove('drag-over');
+          handleFile(cardId, e.dataTransfer.files[0]);
         });
       });
     }
 
-    // --- PDF Export ---
+    // ── PDF Export ──
     async function exportPDF() {
-      if (cards.length === 0) return;
+      const p = activeProject();
+      if (!p || p.cards.length === 0) return;
       const btn = document.getElementById('pdf-btn');
       btn.disabled = true;
       btn.innerHTML = '<i class="ti ti-loader" aria-hidden="true"></i> Generating…';
@@ -499,15 +658,15 @@
       const cardW = 210 - margin * 2;
       const surface = document.getElementById('pdf-surface');
 
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
+      for (let i = 0; i < p.cards.length; i++) {
+        const card = p.cards[i];
         const node = document.createElement('div');
         node.className = 'pdf-card';
         node.style.width = '1080px';
 
         const mediaDiv = document.createElement('div');
         mediaDiv.className = 'pdf-card-media';
-        if (card.mediaDataUrl && !card.mediaType.startsWith('video/')) {
+        if (card.mediaDataUrl && card.mediaType && !card.mediaType.startsWith('video/')) {
           const img = document.createElement('img');
           img.src = card.mediaDataUrl;
           mediaDiv.appendChild(img);
@@ -543,13 +702,14 @@
       }
 
       surface.innerHTML = '';
-      pdf.save(`moodboard-${new Date().toISOString().slice(0,10)}.pdf`);
+      pdf.save(`${p.name.replace(/\s+/g,'-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.pdf`);
       btn.disabled = false;
       btn.innerHTML = '<i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF';
     }
 
-    loadFromStorage();
-    render();
+    // ── Init ──
+    load();
+    renderHome();
   </script>
 </body>
 </html>
