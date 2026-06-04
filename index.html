@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,8 +23,6 @@
       --text-primary: #1a1a18;
       --text-secondary: #6b6a66;
       --text-hint: #a8a7a2;
-      --accent: #1a1a18;
-      --accent-bg: #f0eeea;
       --drag-bg: #eaf3ff;
       --drag-border: #3b82f6;
       --drag-text: #1d4ed8;
@@ -43,8 +43,6 @@
         --text-primary: #f0efe9;
         --text-secondary: #a8a7a0;
         --text-hint: #5c5b57;
-        --accent: #f0efe9;
-        --accent-bg: #2a2a27;
         --drag-bg: #1a2540;
         --drag-border: #60a5fa;
         --drag-text: #93c5fd;
@@ -67,6 +65,8 @@
       justify-content: space-between;
       max-width: 1200px;
       margin: 0 auto 2rem;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .wordmark {
@@ -78,7 +78,23 @@
       color: var(--text-secondary);
     }
 
-    .add-btn {
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .save-indicator {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--text-hint);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .save-indicator.visible { opacity: 1; }
+
+    .btn {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -91,10 +107,13 @@
       border-radius: var(--radius-md);
       padding: 8px 16px;
       cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      white-space: nowrap;
     }
-    .add-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
-    .add-btn i { font-size: 15px; }
+    .btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn i { font-size: 15px; }
+    .btn.pdf-btn { color: var(--text-primary); }
 
     .board {
       display: grid;
@@ -111,7 +130,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      transition: border-color 0.15s;
       animation: cardIn 0.25s ease forwards;
     }
     .card:hover { border-color: var(--border-mid); }
@@ -134,7 +153,7 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: background 0.15s, border-color 0.15s;
+      transition: background 0.15s;
     }
     .card-media.drag-over {
       background: var(--drag-bg);
@@ -196,7 +215,6 @@
     .hidden-input { display: none; }
 
     .card-fields { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
-
     .field { display: flex; flex-direction: column; gap: 4px; }
 
     .field-label {
@@ -277,6 +295,89 @@
       letter-spacing: 0.08em;
     }
 
+    /* PDF export: hidden render surface */
+    #pdf-surface {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 1080px;
+      background: #ffffff;
+      font-family: 'DM Sans', sans-serif;
+      pointer-events: none;
+    }
+
+    .pdf-card {
+      width: 1080px;
+      background: #fff;
+      border: 1px solid #e0ddd8;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 32px;
+      page-break-inside: avoid;
+    }
+
+    .pdf-card-media {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #f2f0ec;
+      position: relative;
+      overflow: hidden;
+    }
+    .pdf-card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pdf-card-media .pdf-no-media {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: #a8a7a2;
+      letter-spacing: 0.08em;
+    }
+
+    .pdf-card-fields {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .pdf-field { display: flex; flex-direction: column; gap: 5px; }
+    .pdf-field-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #a8a7a2;
+    }
+    .pdf-field-value {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: #1a1a18;
+      line-height: 1.55;
+      border-bottom: 0.5px solid #e0ddd8;
+      padding-bottom: 6px;
+      min-height: 28px;
+    }
+    .pdf-field-value.empty { color: #c8c7c2; font-style: italic; }
+
+    .pdf-card-footer {
+      padding: 12px 28px;
+      border-top: 0.5px solid #e0ddd8;
+      display: flex;
+      align-items: center;
+    }
+    .pdf-card-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: #a8a7a2;
+      letter-spacing: 0.1em;
+    }
+
     @media (max-width: 600px) {
       body { padding: 1.25rem 1rem 3rem; }
       .board { grid-template-columns: 1fr; }
@@ -287,28 +388,113 @@
 
   <header>
     <span class="wordmark">Moodboard</span>
-    <button class="add-btn" onclick="addCard()">
-      <i class="ti ti-plus" aria-hidden="true"></i> Add card
-    </button>
+    <div class="header-actions">
+      <span class="save-indicator" id="save-indicator">saved</span>
+      <button class="btn pdf-btn" id="pdf-btn" onclick="exportPDF()" title="Download all cards as PDF">
+        <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF
+      </button>
+      <button class="btn" onclick="addCard()">
+        <i class="ti ti-plus" aria-hidden="true"></i> Add card
+      </button>
+    </div>
   </header>
 
   <div class="board" id="board"></div>
+  <div id="pdf-surface"></div>
 
   <script>
+    const STORAGE_KEY = 'sanca_moodboard_v1';
     let cards = [];
     let counter = 0;
+    let saveTimer = null;
 
+    // --- Persistence ---
+    function saveToStorage() {
+      const serializable = cards.map(c => ({
+        id: c.id,
+        mediaDataUrl: c.mediaDataUrl || null,
+        mediaType: c.mediaType || null,
+        scene: c.scene,
+        shot: c.shot,
+        dialogue: c.dialogue,
+        description: c.description
+      }));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: serializable, counter }));
+        showSaved();
+      } catch(e) {}
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        counter = data.counter || 0;
+        cards = (data.cards || []).map(c => ({
+          ...c,
+          media: c.mediaDataUrl ? { url: c.mediaDataUrl, type: c.mediaType } : null
+        }));
+      } catch(e) { cards = []; }
+    }
+
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveToStorage, 600);
+    }
+
+    function showSaved() {
+      const el = document.getElementById('save-indicator');
+      if (!el) return;
+      el.classList.add('visible');
+      clearTimeout(el._hideTimer);
+      el._hideTimer = setTimeout(() => el.classList.remove('visible'), 1800);
+    }
+
+    // --- File handling ---
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleFile(id, file) {
+      if (!file) return;
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      if (!isImage && !isVideo) return;
+      const dataUrl = await fileToDataUrl(file);
+      const card = cards.find(c => c.id === id);
+      if (!card) return;
+      card.media = { url: dataUrl, type: file.type };
+      card.mediaDataUrl = dataUrl;
+      card.mediaType = file.type;
+      render();
+      attachDragListeners(id);
+      scheduleSave();
+    }
+
+    function handleMedia(id, input) {
+      handleFile(id, input.files[0]);
+    }
+
+    // --- Card logic ---
     function addCard() {
       counter++;
       const id = counter;
-      cards.push({ id, media: null, scene: '', shot: '', dialogue: '', description: '' });
+      cards.push({ id, media: null, mediaDataUrl: null, mediaType: null, scene: '', shot: '', dialogue: '', description: '' });
       render();
       attachDragListeners(id);
+      scheduleSave();
     }
 
     function removeCard(id) {
       cards = cards.filter(c => c.id !== id);
       render();
+      scheduleSave();
     }
 
     function triggerMedia(id) {
@@ -316,27 +502,12 @@
       if (inp) inp.click();
     }
 
-    function handleFile(id, file) {
-      if (!file) return;
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-      if (!isImage && !isVideo) return;
-      const url = URL.createObjectURL(file);
-      const card = cards.find(c => c.id === id);
-      if (card) { card.media = { url, type: file.type }; }
-      render();
-      attachDragListeners(id);
-    }
-
-    function handleMedia(id, input) {
-      handleFile(id, input.files[0]);
-    }
-
     function update(id, field, value) {
       const card = cards.find(c => c.id === id);
-      if (card) card[field] = value;
+      if (card) { card[field] = value; scheduleSave(); }
     }
 
+    // --- Drag & drop ---
     function attachDragListeners(id) {
       const el = document.querySelector(`.card[data-id="${id}"] .card-media`);
       if (!el) return;
@@ -350,6 +521,15 @@
       });
     }
 
+    // --- Render ---
+    function mediaTag(card) {
+      if (!card.media) return '';
+      const { url, type } = card.media;
+      if (type === 'image/gif') return `<img src="${url}" alt="card media" />`;
+      if (type.startsWith('video/')) return `<video src="${url}" autoplay loop muted playsinline></video>`;
+      return `<img src="${url}" alt="card media" />`;
+    }
+
     function render() {
       const board = document.getElementById('board');
       if (!board) return;
@@ -361,19 +541,12 @@
 
       board.innerHTML = cards.map((card, idx) => {
         const num = String(idx + 1).padStart(2, '0');
-        let mediaHTML = '';
-        if (card.media) {
-          if (card.media.type.startsWith('video') || card.media.type === 'image/gif') {
-            mediaHTML = `<video src="${card.media.url}" autoplay loop muted playsinline></video>`;
-          } else {
-            mediaHTML = `<img src="${card.media.url}" alt="card media" />`;
-          }
-        }
+        const hasMedia = !!card.media;
         return `
           <div class="card" data-id="${card.id}">
             <div class="card-media" onclick="triggerMedia(${card.id})" title="Drag & drop or click to upload">
-              ${mediaHTML}
-              <div class="media-hint" style="${card.media ? 'opacity:0' : ''}">
+              ${mediaTag(card)}
+              <div class="media-hint" style="${hasMedia ? 'opacity:0' : ''}">
                 <i class="ti ti-photo" aria-hidden="true"></i>
                 <span class="label">Image / GIF</span>
                 <span class="sublabel">drag &amp; drop or click</span>
@@ -384,11 +557,11 @@
             <div class="card-fields">
               <div class="field">
                 <label class="field-label" for="scene-${card.id}">Scene</label>
-                <input type="text" id="scene-${card.id}" placeholder="e.g. Ext. rooftop — dusk" value="${card.scene}" oninput="update(${card.id}, 'scene', this.value)">
+                <input type="text" id="scene-${card.id}" placeholder="e.g. Ext. rooftop — dusk" value="${card.scene.replace(/"/g,'&quot;')}" oninput="update(${card.id}, 'scene', this.value)">
               </div>
               <div class="field">
                 <label class="field-label" for="shot-${card.id}">Shot type</label>
-                <input type="text" id="shot-${card.id}" placeholder="e.g. Close-up, wide shot…" value="${card.shot}" oninput="update(${card.id}, 'shot', this.value)">
+                <input type="text" id="shot-${card.id}" placeholder="e.g. Close-up, wide shot…" value="${card.shot.replace(/"/g,'&quot;')}" oninput="update(${card.id}, 'shot', this.value)">
               </div>
               <div class="field">
                 <label class="field-label" for="dialogue-${card.id}">Dialogue</label>
@@ -412,6 +585,113 @@
       cards.forEach(card => attachDragListeners(card.id));
     }
 
+    // --- PDF Export ---
+    async function exportPDF() {
+      if (cards.length === 0) return;
+
+      const btn = document.getElementById('pdf-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ti ti-loader" aria-hidden="true"></i> Generating…';
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const pageW = 210;
+      const pageH = 297;
+      const margin = 14;
+      const cardW = pageW - margin * 2;
+
+      // Card height: image (16:9 of cardW) + fields area
+      const imgH = cardW * (9 / 16);
+      const fieldsH = 80;
+      const cardH = imgH + fieldsH;
+
+      const surface = document.getElementById('pdf-surface');
+
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+
+        // Build a clean render node for html2canvas
+        const node = document.createElement('div');
+        node.className = 'pdf-card';
+        node.style.width = '1080px';
+
+        // Media section
+        const mediaDiv = document.createElement('div');
+        mediaDiv.className = 'pdf-card-media';
+        if (card.mediaDataUrl && !card.mediaType.startsWith('video/')) {
+          const img = document.createElement('img');
+          img.src = card.mediaDataUrl;
+          mediaDiv.appendChild(img);
+        } else if (card.mediaDataUrl && card.mediaType.startsWith('video/')) {
+          // For videos, show a placeholder in PDF
+          mediaDiv.innerHTML = '<div class="pdf-no-media">video — not rendered in PDF</div>';
+        } else {
+          mediaDiv.innerHTML = '<div class="pdf-no-media">no image</div>';
+        }
+        node.appendChild(mediaDiv);
+
+        // Fields section
+        const fieldsDiv = document.createElement('div');
+        fieldsDiv.className = 'pdf-card-fields';
+        const fields = [
+          { label: 'Scene', key: 'scene' },
+          { label: 'Shot type', key: 'shot' },
+          { label: 'Dialogue', key: 'dialogue' },
+          { label: 'Description', key: 'description' }
+        ];
+        fields.forEach(f => {
+          const val = card[f.key] || '';
+          fieldsDiv.innerHTML += `
+            <div class="pdf-field">
+              <div class="pdf-field-label">${f.label}</div>
+              <div class="pdf-field-value${val ? '' : ' empty'}">${val || '—'}</div>
+            </div>`;
+        });
+        node.appendChild(fieldsDiv);
+
+        // Footer
+        const footerDiv = document.createElement('div');
+        footerDiv.className = 'pdf-card-footer';
+        footerDiv.innerHTML = `<span class="pdf-card-num">${String(i + 1).padStart(2, '0')}</span>`;
+        node.appendChild(footerDiv);
+
+        surface.innerHTML = '';
+        surface.appendChild(node);
+
+        // Render to canvas
+        const canvas = await html2canvas(node, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const canvasW = canvas.width;
+        const canvasH = canvas.height;
+        const ratio = canvasH / canvasW;
+        const pdfImgW = cardW;
+        const pdfImgH = cardW * ratio;
+
+        if (i > 0) pdf.addPage();
+
+        // Center vertically on page
+        const yOffset = (pageH - pdfImgH) / 2;
+        pdf.addImage(imgData, 'JPEG', margin, Math.max(margin, yOffset), pdfImgW, pdfImgH);
+      }
+
+      surface.innerHTML = '';
+
+      const date = new Date().toISOString().slice(0, 10);
+      pdf.save(`moodboard-${date}.pdf`);
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF';
+    }
+
+    // --- Init ---
+    loadFromStorage();
     render();
   </script>
 </body>
