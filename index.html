@@ -720,43 +720,80 @@
       if (card) focusedCardId = parseInt(card.dataset.id);
     });
 
-    document.addEventListener('paste', async e => {
-      // Only active on the board screen
+    document.addEventListener('paste', async function(e) {
       if (!activeId) return;
-      const p = activeProject();
+      var p = activeProject();
       if (!p || p.cards.length === 0) return;
 
-      const items = e.clipboardData && e.clipboardData.items;
+      var items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
 
-      // Find an image in the clipboard
-      let imageItem = null;
-      for (const item of items) {
-        if (item.type.startsWith('image/')) { imageItem = item; break; }
-      }
-      if (!imageItem) return;
-
-      e.preventDefault();
-
-      const file = imageItem.getAsFile();
-      if (!file) return;
-
-      // Use focused card, or last card, or first card
-      let targetId = focusedCardId;
-      if (!targetId || !p.cards.find(c => c.id === targetId)) {
-        targetId = p.cards[p.cards.length - 1].id;
+      // Priority 1: actual image file in clipboard
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          e.preventDefault();
+          var file = items[i].getAsFile();
+          if (!file) continue;
+          var targetId = focusedCardId;
+          if (!targetId || !p.cards.find(function(c) { return c.id === targetId; })) {
+            targetId = p.cards[p.cards.length - 1].id;
+          }
+          flashCard(targetId);
+          await handleFile(targetId, file);
+          return;
+        }
       }
 
-      // Flash the target card to show where it's going
-      const cardEl = document.querySelector(`.card[data-id="${targetId}"]`);
-      if (cardEl) {
-        cardEl.style.outline = '2px solid var(--drag-border)';
-        cardEl.style.outlineOffset = '2px';
-        setTimeout(() => { cardEl.style.outline = ''; cardEl.style.outlineOffset = ''; }, 800);
-      }
+      // Priority 2: text that looks like an image URL
+      for (var j = 0; j < items.length; j++) {
+        if (items[j].type === 'text/plain') {
+          items[j].getAsString(async function(text) {
+            text = text.trim();
+            var imageExtensions = /\.(jpg|jpeg|png|gif|webp|avif|svg)(\?.*)?$/i;
+            var isImageUrl = (text.startsWith('http') && imageExtensions.test(text));
+            // Also accept CloudFront and known image CDN URLs without extension
+            var isCDN = text.startsWith('http') && (
+              text.includes('cloudfront.net') ||
+              text.includes('cloudinary.com') ||
+              text.includes('imgix.net') ||
+              text.includes('shotdeck.com') ||
+              text.includes('frameset.app')
+            );
+            if (!isImageUrl && !isCDN) return;
 
-      await handleFile(targetId, file);
+            var targetId = focusedCardId;
+            if (!targetId || !p.cards.find(function(c) { return c.id === targetId; })) {
+              targetId = p.cards[p.cards.length - 1].id;
+            }
+
+            // Fetch the image and convert to file
+            try {
+              var response = await fetch(text);
+              var blob = await response.blob();
+              var mimeType = blob.type || 'image/jpeg';
+              var filename = 'image.' + mimeType.split('/')[1];
+              var file = new File([blob], filename, { type: mimeType });
+              flashCard(targetId);
+              await handleFile(targetId, file);
+            } catch(err) {
+              console.log('Could not fetch image URL:', err);
+            }
+          });
+          return;
+        }
+      }
     });
+
+    function flashCard(id) {
+      var cardEl = document.querySelector('.card[data-id="' + id + '"]');
+      if (!cardEl) return;
+      cardEl.style.outline = '2px solid var(--drag-border)';
+      cardEl.style.outlineOffset = '2px';
+      setTimeout(function() {
+        cardEl.style.outline = '';
+        cardEl.style.outlineOffset = '';
+      }, 800);
+    }
 
     // ── Inject from extension (Frameset / Shotdeck) ──
     document.addEventListener('moodboard-inject-image', function(e) {
