@@ -758,6 +758,20 @@
       await handleFile(targetId, file);
     });
 
+    // ── Inject from extension (Frameset / Shotdeck) ──
+    document.addEventListener('moodboard-inject-image', function(e) {
+      var file = e.detail;
+      if (!file) return;
+      if (!activeId) return;
+      var p = activeProject();
+      if (!p || p.cards.length === 0) return;
+      var targetId = focusedCardId;
+      if (!targetId || !p.cards.find(function(c) { return c.id === targetId; })) {
+        targetId = p.cards[p.cards.length - 1].id;
+      }
+      handleFile(targetId, file);
+    });
+
     // ── Init ──
     load();
     renderHome();
