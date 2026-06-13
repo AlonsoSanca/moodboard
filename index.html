@@ -1,817 +1,1150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Moodboard — Sanca Films</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moodboard — Sanca Films</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg: #f9f8f6;
+  --surface: #ffffff;
+  --surface-2: #f2f0ec;
+  --border: rgba(0,0,0,0.10);
+  --bw: 0.5px;
+  --text: #1a1a1a;
+  --text-2: #6b6b6b;
+  --text-3: #9e9e9e;
+  --accent: #1a1a1a;
+  --accent-fg: #ffffff;
+  --danger: #e53e3e;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --font-ui: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141413;
+    --surface: #1e1e1c;
+    --surface-2: #262624;
+    --border: rgba(255,255,255,0.10);
+    --text: #f0ede8;
+    --text-2: #9e9b96;
+    --text-3: #6b6866;
+    --accent: #f0ede8;
+    --accent-fg: #1a1a1a;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  }
+}
 
-    :root {
-      --bg: #f9f8f6;
-      --surface: #ffffff;
-      --surface-2: #f2f0ec;
-      --border: rgba(0,0,0,0.09);
-      --border-mid: rgba(0,0,0,0.16);
-      --border-strong: rgba(0,0,0,0.26);
-      --text-primary: #1a1a18;
-      --text-secondary: #6b6a66;
-      --text-hint: #a8a7a2;
-      --drag-bg: rgba(59,130,246,0.08);
-      --drag-border: #3b82f6;
-      --drag-text: #1d4ed8;
-      --danger: #c0392b;
-      --danger-bg: #fdecea;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-      --radius-xl: 16px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #141413;
-        --surface: #1e1e1c;
-        --surface-2: #272724;
-        --border: rgba(255,255,255,0.07);
-        --border-mid: rgba(255,255,255,0.13);
-        --border-strong: rgba(255,255,255,0.22);
-        --text-primary: #f0efe9;
-        --text-secondary: #a8a7a0;
-        --text-hint: #5c5b57;
-        --drag-bg: rgba(96,165,250,0.1);
-        --drag-border: #60a5fa;
-        --drag-text: #93c5fd;
-        --danger: #e57373;
-        --danger-bg: #2c1a1a;
-      }
-    }
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; font-family: inherit; border: none; background: none; }
+input, textarea { font-family: inherit; color: inherit; background: none; border: none; outline: none; resize: none; }
+a { color: inherit; text-decoration: none; }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text-primary);
-      min-height: 100vh;
-    }
+/* ── APP SHELL ── */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ── SCREENS ── */
-    .screen { display: none; padding: 2rem 1.5rem 4rem; }
-    .screen.active { display: block; }
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface);
+  border-bottom: var(--bw) solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(8px);
+}
+.header-logo { height: 28px; display: block; }
+.header-logo-fallback {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+}
+.header-sep { width: var(--bw); height: 20px; background: var(--border); }
+.header-breadcrumb {
+  font-size: 14px; font-weight: 500;
+  color: var(--text-2); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-breadcrumb a { color: var(--text-2); }
+.header-breadcrumb a:hover { color: var(--text); }
+.header-breadcrumb .sep { margin: 0 6px; opacity: 0.4; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 
-    /* ── SHARED HEADER ── */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      max-width: 1200px; margin: 0 auto 2rem; gap: 12px; flex-wrap: wrap;
-    }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .wordmark {
-      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 400;
-      letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-secondary);
-      cursor: pointer; text-decoration: none;
-    }
-    .breadcrumb-sep { color: var(--text-hint); font-size: 14px; }
-    .project-name-label {
-      font-family: 'DM Mono', monospace; font-size: 12px;
-      letter-spacing: 0.1em; color: var(--text-primary);
-    }
-    .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .save-indicator {
-      font-family: 'DM Mono', monospace; font-size: 10px;
-      letter-spacing: 0.1em; color: var(--text-hint);
-      opacity: 0; transition: opacity 0.4s;
-    }
-    .save-indicator.visible { opacity: 1; }
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 500;
+  transition: all 0.15s; white-space: nowrap;
+  border: var(--bw) solid transparent;
+}
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-primary:hover { opacity: 0.82; }
+.btn-secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-ghost { color: var(--text-2); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn i { font-size: 16px; }
+.hidden { display: none !important; }
 
-    .btn {
-      display: flex; align-items: center; gap: 6px;
-      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-      color: var(--text-primary); background: var(--surface);
-      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
-      padding: 8px 16px; cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
-      white-space: nowrap;
-    }
-    .btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn i { font-size: 15px; }
-    .btn.danger { color: var(--danger); }
-    .btn.danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+/* ── CONTENT ── */
+.content { flex: 1; padding: 32px 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-    /* ── HOME SCREEN ── */
-    .home-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+/* ── HOME ── */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
 
-    .project-card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.15s, transform 0.15s;
-      animation: cardIn 0.2s ease forwards;
-      position: relative;
-    }
-    .project-card:hover { border-color: var(--border-mid); transform: translateY(-2px); }
+/* project card */
+.project-card {
+  background: var(--surface);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden; cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.project-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.project-card-thumb {
+  width: 100%; aspect-ratio: 16/9;
+  background: var(--surface-2); overflow: hidden;
+}
+.project-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.project-card-thumb-empty {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); font-size: 28px;
+}
+.project-card-body { padding: 12px 14px 14px; }
+.project-card-name {
+  font-size: 14px; font-weight: 600; margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.project-card-meta {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-3); display: flex; gap: 10px;
+}
+.project-card-del {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 6px;
+  background: rgba(0,0,0,0.55); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s; font-size: 14px;
+  backdrop-filter: blur(4px);
+}
+.project-card:hover .project-card-del { opacity: 1; }
+.project-card-del:hover { background: var(--danger); }
 
-    .project-thumb {
-      width: 100%; aspect-ratio: 16/9;
-      background: var(--surface-2);
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden; position: relative;
-    }
-    .project-thumb img {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-    .project-thumb-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      width: 100%; height: 100%; gap: 1px;
-    }
-    .project-thumb-grid span {
-      background: var(--surface-2);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .project-thumb-grid span img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .project-thumb-empty i { font-size: 24px; color: var(--text-hint); }
+/* new project tile */
+.new-project-tile {
+  background: var(--surface);
+  border: var(--bw) dashed var(--border);
+  border-radius: var(--r-md);
+  min-height: 140px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; cursor: pointer;
+  transition: all 0.15s; color: var(--text-3);
+}
+.new-project-tile:hover { border-color: var(--text-2); color: var(--text-2); background: var(--surface-2); }
+.new-project-tile i { font-size: 24px; }
+.new-project-tile span { font-size: 13px; font-weight: 500; }
 
-    .project-card-body { padding: 12px 14px; }
-    .project-card-title {
-      font-size: 14px; font-weight: 500; color: var(--text-primary);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      margin-bottom: 4px;
-    }
-    .project-card-meta {
-      font-family: 'DM Mono', monospace; font-size: 10px;
-      color: var(--text-hint); letter-spacing: 0.06em;
-    }
+/* ── MODAL ── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+  z-index: 1000; display: flex;
+  align-items: center; justify-content: center; padding: 24px;
+}
+.modal {
+  background: var(--surface);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-md);
+  padding: 24px; width: 100%; max-width: 400px;
+  box-shadow: var(--shadow-md);
+}
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.modal-input {
+  width: 100%; padding: 9px 12px;
+  background: var(--surface-2);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 14px; color: var(--text);
+  margin-bottom: 16px; transition: border-color 0.15s;
+}
+.modal-input:focus { border-color: var(--text-2); outline: none; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-    .project-card-del {
-      position: absolute; top: 8px; right: 8px;
-      background: var(--surface); border: 0.5px solid var(--border-mid);
-      border-radius: var(--radius-md); padding: 5px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s;
-      color: var(--text-hint); font-size: 14px;
-    }
-    .project-card:hover .project-card-del { opacity: 1; }
-    .project-card-del:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+/* ── BOARD ── */
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
 
-    .new-project-card {
-      background: transparent;
-      border: 0.5px dashed var(--border-mid);
-      border-radius: var(--radius-lg);
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 8px; padding: 2.5rem 1rem;
-      color: var(--text-hint);
-      animation: cardIn 0.2s ease forwards;
-      min-height: 160px;
-    }
-    .new-project-card:hover { border-color: var(--border-strong); background: var(--surface); color: var(--text-secondary); }
-    .new-project-card i { font-size: 22px; }
-    .new-project-card span { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+/* ── MOODBOARD CARD ── */
+.card {
+  background: var(--surface);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column;
+}
 
-    /* modal */
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 100;
-      background: rgba(0,0,0,0.4);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal {
-      background: var(--surface); border: 0.5px solid var(--border-mid);
-      border-radius: var(--radius-xl); padding: 28px;
-      width: 360px; max-width: calc(100vw - 2rem);
-      transform: translateY(8px); transition: transform 0.2s;
-    }
-    .modal-overlay.open .modal { transform: translateY(0); }
-    .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 16px; }
-    .modal input {
-      width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px;
-      color: var(--text-primary); background: var(--surface-2);
-      border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
-      padding: 10px 14px; outline: none; transition: border-color 0.15s;
-      margin-bottom: 16px;
-    }
-    .modal input:focus { border-color: var(--border-strong); }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+/* image strip */
+.card-strip {
+  position: relative; height: 200px;
+  overflow-x: auto; overflow-y: hidden;
+  display: flex; align-items: stretch;
+  background: var(--surface-2);
+  border-bottom: var(--bw) solid var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.card-strip::-webkit-scrollbar { height: 4px; }
+.card-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.card-strip.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+}
 
-    /* ── BOARD SCREEN ── */
-    .board {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 18px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+/* placeholder */
+.strip-placeholder {
+  width: 100%; min-width: 100%; height: 200px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; color: var(--text-3); cursor: pointer;
+  transition: background 0.15s;
+}
+.strip-placeholder:hover { background: var(--surface-2); }
+.strip-placeholder i { font-size: 22px; }
+.strip-placeholder span { font-family: var(--font-mono); font-size: 11px; text-align: center; }
 
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+/* image item */
+.img-item {
+  position: relative; flex-shrink: 0; height: 200px;
+}
+.img-item img {
+  height: 200px; width: auto; display: block;
+  object-fit: contain; background: var(--surface-2);
+}
+.img-item-rm {
+  position: absolute; top: 6px; right: 6px;
+  width: 22px; height: 22px; border-radius: 4px;
+  background: rgba(0,0,0,0.55); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; opacity: 0; transition: opacity 0.15s;
+  cursor: pointer; backdrop-filter: blur(4px);
+}
+.img-item:hover .img-item-rm { opacity: 1; }
+.img-item-rm:hover { background: var(--danger); }
 
-    .card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      display: flex; flex-direction: column;
-      transition: border-color 0.15s;
-      animation: cardIn 0.22s ease forwards;
-    }
-    .card:hover { border-color: var(--border-mid); }
+/* add-more btn */
+.strip-add-btn {
+  flex-shrink: 0; width: 48px; height: 200px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-left: var(--bw) solid var(--border);
+}
+.strip-add-btn:hover { background: var(--surface-2); color: var(--text); }
+.strip-add-btn i { font-size: 18px; }
 
-    /* ── MEDIA AREA — adapts to image ratio ── */
-    .card-media-wrap {
-      position: relative;
-      width: 100%;
-      background: var(--surface-2);
-      border-bottom: 0.5px solid var(--border);
-      overflow: hidden;
-    }
-    /* placeholder keeps 16:9 until image loaded */
-    .card-media-wrap.empty {
-      aspect-ratio: 16/9;
-    }
+/* card fields */
+.card-fields {
+  padding: 12px 14px;
+  display: flex; flex-direction: column;
+  gap: 10px; flex: 1;
+}
+.field-group { display: flex; flex-direction: column; gap: 2px; }
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3);
+}
+.field-ta {
+  font-size: 13px; line-height: 1.5; color: var(--text);
+  border-bottom: var(--bw) solid var(--border);
+  padding: 3px 0 4px; width: 100%;
+  overflow: hidden; resize: none;
+  min-height: 24px;
+  transition: border-color 0.15s; background: transparent;
+}
+.field-ta:focus { border-bottom-color: var(--text-2); }
+.field-ta::placeholder { color: var(--text-3); }
+.field-ta-desc { min-height: 48px; }
 
-    .card-media-inner {
-      width: 100%;
-      display: block;
-      line-height: 0;
-    }
-    .card-media-wrap.empty .card-media-inner {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 8px;
-    }
+/* card footer */
+.card-footer {
+  padding: 8px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: var(--bw) solid var(--border);
+  background: var(--surface-2);
+}
+.card-num { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.card-del {
+  width: 24px; height: 24px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); font-size: 14px; transition: all 0.15s;
+}
+.card-del:hover { background: #fee2e2; color: var(--danger); }
+@media (prefers-color-scheme: dark) {
+  .card-del:hover { background: rgba(229,62,62,0.15); }
+}
 
-    /* Key: img/video sit in normal flow, no absolute positioning */
-    .card-media-inner img,
-    .card-media-inner video {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
+/* loading overlay */
+.loading-overlay {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 5;
+}
+@media (prefers-color-scheme: dark) {
+  .loading-overlay { background: rgba(0,0,0,0.4); }
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-2);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-    .media-hint {
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      pointer-events: none;
-    }
-    .media-hint i { font-size: 24px; color: var(--text-hint); }
-    .media-hint .label { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
-    .media-hint .sublabel { font-size: 10px; color: var(--text-hint); font-family: 'DM Mono', monospace; letter-spacing: 0.06em; opacity: 0.65; }
+/* empty state */
+.empty-state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; padding: 80px 24px;
+  color: var(--text-3); text-align: center;
+}
+.empty-state i { font-size: 40px; opacity: 0.4; }
+.empty-state p { font-size: 14px; }
 
-    /* drop zone: absolute so it always covers whatever height the image creates */
-    .drop-zone {
-      position: absolute; inset: 0; z-index: 10;
-      cursor: pointer; transition: background 0.15s;
-    }
-    .drop-zone:hover { background: rgba(0,0,0,0.26); }
-    .card-media-wrap.empty .drop-zone:hover { background: rgba(0,0,0,0.04); }
-    .drop-zone.drag-over { background: var(--drag-bg) !important; outline: 2px dashed var(--drag-border); outline-offset: -3px; }
+/* toast */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--accent); color: var(--accent-fg);
+  padding: 10px 18px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 500;
+  z-index: 9999; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-md);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
 
-    .drop-zone-icon {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-    }
-    .card-media-wrap:not(.empty) .drop-zone:hover .drop-zone-icon { opacity: 1; }
-    .drop-zone-icon i { font-size: 20px; color: #fff; }
+/* export progress */
+#export-progress {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+  z-index: 2000; display: flex;
+  align-items: center; justify-content: center;
+}
+.export-box {
+  background: var(--surface); border-radius: var(--r-md);
+  padding: 32px 40px; text-align: center;
+  box-shadow: var(--shadow-md); min-width: 240px;
+}
+.export-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.export-box p { font-size: 13px; color: var(--text-2); margin-top: 12px; }
+.progress-track {
+  width: 100%; height: 4px; background: var(--surface-2);
+  border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  border-radius: 2px; width: 0%;
+  transition: width 0.2s;
+}
 
-    .drag-over-label {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 6px;
-      opacity: 0; pointer-events: none; transition: opacity 0.15s;
-    }
-    .drop-zone.drag-over .drag-over-label { opacity: 1; }
-    .drag-over-label i { font-size: 26px; color: var(--drag-text); }
-    .drag-over-label span { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--drag-text); letter-spacing: 0.08em; }
-
-    .hidden-input { display: none; }
-
-    .card-fields { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-hint); font-weight: 400; }
-    .field input, .field textarea {
-      font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-primary);
-      background: transparent; border: none; border-bottom: 0.5px solid var(--border);
-      border-radius: 0; padding: 4px 0; outline: none; width: 100%;
-      transition: border-color 0.15s; resize: none; line-height: 1.55;
-    }
-    .field input::placeholder, .field textarea::placeholder { color: var(--text-hint); font-style: italic; }
-    .field input:focus, .field textarea:focus { border-bottom-color: var(--border-strong); }
-
-    .card-footer { padding: 10px 16px; border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); letter-spacing: 0.08em; }
-    .remove-btn { background: none; border: none; cursor: pointer; padding: 5px; color: var(--text-hint); border-radius: var(--radius-md); display: flex; align-items: center; font-size: 15px; transition: color 0.15s, background 0.15s; }
-    .remove-btn:hover { color: var(--danger); background: var(--danger-bg); }
-
-    .empty-state { grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 5rem 1rem; color: var(--text-hint); border: 0.5px dashed var(--border-mid); border-radius: var(--radius-lg); }
-    .empty-state i { font-size: 30px; }
-    .empty-state span { font-size: 12px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
-
-    /* PDF surface */
-    #pdf-surface { position: fixed; left: -9999px; top: 0; width: 1080px; background: #fff; font-family: 'DM Sans', sans-serif; pointer-events: none; }
-    .pdf-card { width: 1080px; background: #fff; border: 1px solid #e0ddd8; border-radius: 12px; overflow: hidden; margin-bottom: 32px; }
-    .pdf-card-media { width: 100%; background: #f2f0ec; overflow: hidden; }
-    .pdf-card-media img { width: 100%; height: auto; display: block; }
-    .pdf-card-media .pdf-no-media { display: flex; align-items: center; justify-content: center; aspect-ratio: 16/9; font-family: 'DM Mono', monospace; font-size: 13px; color: #a8a7a2; letter-spacing: 0.08em; }
-    .pdf-card-fields { padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; }
-    .pdf-field { display: flex; flex-direction: column; gap: 5px; }
-    .pdf-field-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #a8a7a2; }
-    .pdf-field-value { font-family: 'DM Sans', sans-serif; font-size: 15px; color: #1a1a18; line-height: 1.55; border-bottom: 0.5px solid #e0ddd8; padding-bottom: 6px; min-height: 28px; }
-    .pdf-field-value.empty { color: #c8c7c2; font-style: italic; }
-    .pdf-card-footer { padding: 12px 28px; border-top: 0.5px solid #e0ddd8; }
-    .pdf-card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: #a8a7a2; letter-spacing: 0.1em; }
-
-    @media (max-width: 600px) {
-      body { padding: 0; }
-      .screen { padding: 1.25rem 1rem 3rem; }
-      .board { grid-template-columns: 1fr; }
-      .home-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    }
-  </style>
+@media (max-width: 600px) {
+  .content { padding: 20px 16px; }
+  .header { padding: 0 16px; }
+  .board-grid { grid-template-columns: 1fr; }
+  .header-actions .btn-label { display: none; }
+}
+</style>
 </head>
 <body>
+<div id="app">
 
-  <!-- HOME SCREEN -->
-  <div class="screen active" id="screen-home">
-    <div class="topbar">
-      <span class="wordmark">Moodboard</span>
-    </div>
-    <div class="home-grid" id="home-grid"></div>
-  </div>
+  <header class="header" id="header">
+    <a href="?" id="home-link">
+      <img src="./logo.png" class="header-logo" id="logo-img" alt="Sanca Films"
+           onerror="this.style.display='none';document.getElementById('logo-text').style.display='block'">
+      <span class="header-logo-fallback hidden" id="logo-text">SANCA FILMS</span>
+    </a>
+    <div class="header-sep hidden" id="hdr-sep"></div>
+    <div class="header-breadcrumb" id="hdr-crumb"></div>
+    <div class="header-actions" id="hdr-actions"></div>
+  </header>
 
-  <!-- BOARD SCREEN -->
-  <div class="screen" id="screen-board">
-    <div class="topbar">
-      <div class="topbar-left">
-        <a class="wordmark" onclick="goHome()">Moodboard</a>
-        <span class="breadcrumb-sep">/</span>
-        <span class="project-name-label" id="board-title-label"></span>
-      </div>
-      <div class="topbar-right">
-        <span class="save-indicator" id="save-indicator">saved</span>
-        <button class="btn" id="pdf-btn" onclick="exportPDF()">
-          <i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF
-        </button>
-        <button class="btn" onclick="addCard()">
-          <i class="ti ti-plus" aria-hidden="true"></i> Add card
-        </button>
-      </div>
-    </div>
-    <div class="board" id="board"></div>
-  </div>
+  <main class="content hidden" id="home-screen">
+    <div class="projects-grid" id="projects-grid"></div>
+  </main>
 
-  <!-- NEW PROJECT MODAL -->
-  <div class="modal-overlay" id="modal">
-    <div class="modal">
-      <h2>New project</h2>
-      <input type="text" id="modal-input" placeholder="Project name…" maxlength="60" />
+  <main class="content hidden" id="board-screen">
+    <div class="board-grid" id="board-grid"></div>
+  </main>
+
+  <!-- New project modal -->
+  <div class="modal-backdrop hidden" id="proj-modal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2 class="modal-title">New project</h2>
+      <input type="text" class="modal-input" id="proj-name-input"
+             placeholder="Project name…" maxlength="120" autocomplete="off">
       <div class="modal-actions">
-        <button class="btn" onclick="closeModal()">Cancel</button>
-        <button class="btn" id="modal-confirm" onclick="confirmNewProject()">Create</button>
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-create">Create</button>
       </div>
     </div>
   </div>
 
-  <div id="pdf-surface"></div>
+  <!-- PDF export overlay -->
+  <div id="export-progress" class="hidden">
+    <div class="export-box">
+      <h3>Exporting PDF…</h3>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+      <p id="prog-label">Preparing…</p>
+    </div>
+  </div>
 
-  <script>
-    const DB_KEY = 'sanca_mb_projects_v2';
+</div>
 
-    // ── State ──
-    let projects = [];   // [{ id, name, cards, counter, createdAt }]
-    let activeId = null; // current project id
-    let saveTimer = null;
+<div id="toast"></div>
 
-    // ── Persistence ──
-    function load() {
+<script>
+// ══════════════════════════════════════════════════
+//  ⚠️  PASTE YOUR SUPABASE CREDENTIALS HERE
+// ══════════════════════════════════════════════════
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// ══════════════════════════════════════════════════
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── helpers ────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+let toastTimer;
+function toast(msg, ms = 3000) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US',
+    { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function slugDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function autoGrow(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+const IMG_URL_RE = /cloudfront\.net|cloudinary\.com|imgix\.net|frameset\.app|shotdeck\.com/i;
+
+// ─── state ───────────────────────────────────────
+let curProjectId   = null;
+let curProjectName = '';
+
+// ─── routing ─────────────────────────────────────
+function getQPid() {
+  return new URLSearchParams(location.search).get('project');
+}
+
+function navToBoard(id, name) {
+  history.pushState({}, '', `?project=${id}`);
+  openBoard(id, name);
+}
+
+function navToHome() {
+  history.pushState({}, '', location.pathname);
+  openHome();
+}
+
+window.addEventListener('popstate', () => {
+  const pid = getQPid();
+  pid ? loadBoardData(pid) : openHome();
+});
+
+$('home-link').addEventListener('click', e => {
+  e.preventDefault();
+  navToHome();
+});
+
+// ─── screens ─────────────────────────────────────
+function openHome() {
+  curProjectId = null;
+  curProjectName = '';
+  $('home-screen').classList.remove('hidden');
+  $('board-screen').classList.add('hidden');
+  $('hdr-crumb').innerHTML = '';
+  $('hdr-sep').classList.add('hidden');
+  $('hdr-actions').innerHTML = '';
+  loadProjects();
+}
+
+function openBoard(id, name) {
+  curProjectId   = id;
+  curProjectName = name;
+  $('home-screen').classList.add('hidden');
+  $('board-screen').classList.remove('hidden');
+  $('hdr-sep').classList.remove('hidden');
+  $('hdr-crumb').innerHTML =
+    `<a href="?" id="bc-home">Projects</a><span class="sep">›</span>${esc(name)}`;
+  $('bc-home')?.addEventListener('click', e => { e.preventDefault(); navToHome(); });
+  $('hdr-actions').innerHTML = `
+    <button class="btn btn-secondary" id="btn-pdf">
+      <i class="ti ti-file-type-pdf"></i>
+      <span class="btn-label">Export PDF</span>
+    </button>
+    <button class="btn btn-primary" id="btn-add">
+      <i class="ti ti-plus"></i>
+      <span class="btn-label">Add card</span>
+    </button>
+  `;
+  $('btn-pdf').addEventListener('click', exportPDF);
+  $('btn-add').addEventListener('click', addCard);
+  loadBoardData(id);
+}
+
+// ─── home: load projects ──────────────────────────
+async function loadProjects() {
+  const grid = $('projects-grid');
+  grid.innerHTML = '';
+
+  const newTile = document.createElement('div');
+  newTile.className = 'new-project-tile';
+  newTile.innerHTML = `<i class="ti ti-plus"></i><span>New project</span>`;
+  newTile.addEventListener('click', openProjModal);
+  grid.appendChild(newTile);
+
+  const { data: projects, error } = await sb
+    .from('projects')
+    .select('id, name, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) { toast('Failed to load projects'); return; }
+
+  for (const p of projects) {
+    const [{ count }, { data: thumb }] = await Promise.all([
+      sb.from('cards')
+        .select('*', { count: 'exact', head: true })
+        .eq('project_id', p.id),
+      sb.from('card_images')
+        .select('image_url')
+        .eq('project_id', p.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    ]);
+
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.innerHTML = `
+      <div class="project-card-thumb">
+        ${thumb
+          ? `<img src="${esc(thumb.image_url)}" loading="lazy">`
+          : `<div class="project-card-thumb-empty"><i class="ti ti-photo"></i></div>`}
+      </div>
+      <div class="project-card-body">
+        <div class="project-card-name">${esc(p.name)}</div>
+        <div class="project-card-meta">
+          <span>${count ?? 0} card${count !== 1 ? 's' : ''}</span>
+          <span>${fmtDate(p.created_at)}</span>
+        </div>
+      </div>
+      <button class="project-card-del" title="Delete project"><i class="ti ti-trash"></i></button>
+    `;
+    card.querySelector('.project-card-del').addEventListener('click', e => {
+      e.stopPropagation();
+      deleteProject(p.id, card);
+    });
+    card.addEventListener('click', () => navToBoard(p.id, p.name));
+    grid.appendChild(card);
+  }
+
+  if (!projects.length) {
+    const em = document.createElement('div');
+    em.className = 'empty-state';
+    em.style.gridColumn = '1/-1';
+    em.innerHTML = `<i class="ti ti-layout-board"></i><p>No projects yet.</p>`;
+    grid.appendChild(em);
+  }
+}
+
+async function deleteProject(id, el) {
+  if (!confirm('Delete this project and all its data? This cannot be undone.')) return;
+  el.style.opacity = '0.4'; el.style.pointerEvents = 'none';
+
+  const { data: imgs } = await sb.from('card_images').select('image_url').eq('project_id', id);
+  if (imgs?.length) {
+    const paths = imgs.map(i => {
       try {
-        const raw = localStorage.getItem(DB_KEY);
-        if (raw) projects = JSON.parse(raw);
-      } catch(e) { projects = []; }
-    }
+        const u = new URL(i.image_url);
+        return decodeURIComponent(u.pathname.split('/object/public/card-images/')[1]);
+      } catch { return null; }
+    }).filter(Boolean);
+    if (paths.length) await sb.storage.from('card-images').remove(paths);
+  }
+  await sb.from('card_images').delete().eq('project_id', id);
+  await sb.from('cards').delete().eq('project_id', id);
+  await sb.from('projects').delete().eq('id', id);
+  el.remove();
+  toast('Project deleted');
+}
 
-    function save() {
-      try { localStorage.setItem(DB_KEY, JSON.stringify(projects)); showSaved(); } catch(e) {}
-    }
+// ─── new project modal ────────────────────────────
+function openProjModal() {
+  $('proj-modal').classList.remove('hidden');
+  $('proj-name-input').value = '';
+  setTimeout(() => $('proj-name-input').focus(), 50);
+}
+$('modal-cancel').addEventListener('click', () => $('proj-modal').classList.add('hidden'));
+$('proj-modal').addEventListener('click', e => {
+  if (e.target === $('proj-modal')) $('proj-modal').classList.add('hidden');
+});
+$('proj-name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') createProject();
+  if (e.key === 'Escape') $('proj-modal').classList.add('hidden');
+});
+$('modal-create').addEventListener('click', createProject);
 
-    function scheduleSave() {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(save, 600);
-    }
+async function createProject() {
+  const name = $('proj-name-input').value.trim();
+  if (!name) { $('proj-name-input').focus(); return; }
+  $('modal-create').disabled = true;
+  $('modal-create').textContent = 'Creating…';
+  const { data, error } = await sb.from('projects').insert({ name }).select().single();
+  $('modal-create').disabled = false;
+  $('modal-create').textContent = 'Create';
+  if (error) { toast('Failed to create project'); return; }
+  $('proj-modal').classList.add('hidden');
+  navToBoard(data.id, data.name);
+}
 
-    function showSaved() {
-      const el = document.getElementById('save-indicator');
-      if (!el) return;
-      el.classList.add('visible');
-      clearTimeout(el._t);
-      el._t = setTimeout(() => el.classList.remove('visible'), 1800);
-    }
+// ─── board: load ──────────────────────────────────
+async function loadBoardData(projectId) {
+  const grid = $('board-grid');
+  grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>`;
 
-    function getProject(id) { return projects.find(p => p.id === id); }
+  const { data: proj } = await sb.from('projects').select('name').eq('id', projectId).single();
+  if (proj && proj.name !== curProjectName) {
+    curProjectName = proj.name;
+    curProjectId   = projectId;
+    $('hdr-crumb').innerHTML =
+      `<a href="?" id="bc-home">Projects</a><span class="sep">›</span>${esc(proj.name)}`;
+    $('bc-home')?.addEventListener('click', e => { e.preventDefault(); navToHome(); });
+  }
 
-    // ── Navigation ──
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById('screen-' + id).classList.add('active');
-    }
+  const { data: cards, error } = await sb
+    .from('cards')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('position', { ascending: true });
 
-    function goHome() {
-      activeId = null;
-      renderHome();
-      showScreen('home');
-    }
+  if (error) { toast('Failed to load board'); return; }
+  grid.innerHTML = '';
 
-    function openProject(id) {
-      activeId = id;
-      const p = getProject(id);
-      document.getElementById('board-title-label').textContent = p.name;
-      renderBoard();
-      showScreen('board');
-    }
+  if (!cards.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <i class="ti ti-cards"></i><p>No cards yet. Hit "Add card".</p></div>`;
+    return;
+  }
 
-    // ── Home ──
-    function renderHome() {
-      const grid = document.getElementById('home-grid');
-      const cards = projects.map((p, idx) => {
-        const thumbImgs = (p.cards || [])
-          .filter(c => c.mediaDataUrl && !c.mediaType.startsWith('video/'))
-          .slice(0, 4);
-
-        let thumbHTML = '';
-        if (thumbImgs.length === 0) {
-          thumbHTML = `<div class="project-thumb project-thumb-empty"><i class="ti ti-layout-board" aria-hidden="true"></i></div>`;
-        } else if (thumbImgs.length === 1) {
-          thumbHTML = `<div class="project-thumb"><img src="${thumbImgs[0].mediaDataUrl}" alt=""></div>`;
-        } else {
-          const cells = thumbImgs.slice(0, 4).map(c =>
-            `<span><img src="${c.mediaDataUrl}" alt=""></span>`
-          ).join('');
-          thumbHTML = `<div class="project-thumb"><div class="project-thumb-grid">${cells}</div></div>`;
-        }
-
-        const count = (p.cards || []).length;
-        const date = new Date(p.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-
-        return `
-          <div class="project-card" onclick="openProject('${p.id}')" style="animation-delay:${idx * 40}ms">
-            ${thumbHTML}
-            <div class="project-card-body">
-              <div class="project-card-title">${p.name}</div>
-              <div class="project-card-meta">${count} card${count !== 1 ? 's' : ''} · ${date}</div>
-            </div>
-            <button class="project-card-del" onclick="event.stopPropagation(); deleteProject('${p.id}')" aria-label="Delete project">
-              <i class="ti ti-trash" aria-hidden="true"></i>
-            </button>
-          </div>`;
-      }).join('');
-
-      grid.innerHTML = cards + `
-        <div class="new-project-card" onclick="openModal()">
-          <i class="ti ti-plus" aria-hidden="true"></i>
-          <span>New project</span>
-        </div>`;
-    }
-
-    function deleteProject(id) {
-      if (!confirm('Delete this project? This can\'t be undone.')) return;
-      projects = projects.filter(p => p.id !== id);
-      save();
-      renderHome();
-    }
-
-    // ── Modal ──
-    function openModal() {
-      const m = document.getElementById('modal');
-      m.classList.add('open');
-      setTimeout(() => document.getElementById('modal-input').focus(), 50);
-    }
-    function closeModal() {
-      document.getElementById('modal').classList.remove('open');
-      document.getElementById('modal-input').value = '';
-    }
-    function confirmNewProject() {
-      const name = document.getElementById('modal-input').value.trim();
-      if (!name) return;
-      const id = 'p_' + Date.now();
-      projects.push({ id, name, cards: [], counter: 0, createdAt: Date.now() });
-      save();
-      closeModal();
-      openProject(id);
-    }
-    document.getElementById('modal-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') confirmNewProject();
-      if (e.key === 'Escape') closeModal();
+  const imagesByCard = {};
+  if (cards.length) {
+    const { data: allImages } = await sb
+      .from('card_images')
+      .select('*')
+      .in('card_id', cards.map(c => c.id))
+      .order('position', { ascending: true });
+    (allImages || []).forEach(img => {
+      (imagesByCard[img.card_id] = imagesByCard[img.card_id] || []).push(img);
     });
-    document.getElementById('modal').addEventListener('click', e => {
-      if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  cards.forEach((card, i) => {
+    grid.appendChild(buildCard(card, imagesByCard[card.id] || [], i + 1));
+  });
+
+  grid.querySelectorAll('.field-ta').forEach(autoGrow);
+}
+
+// ─── build card element ───────────────────────────
+function buildCard(card, images, num) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.dataset.id  = card.id;
+  el.dataset.num = num;
+
+  // strip
+  const strip = buildStrip(card.id, images);
+  el.appendChild(strip);
+
+  // fields
+  const fields = document.createElement('div');
+  fields.className = 'card-fields';
+
+  const FIELD_DEFS = [
+    { key: 'scene',       label: 'Scene',       ph: 'Scene name…',             cls: '' },
+    { key: 'shot',        label: 'Shot type',   ph: 'e.g. Wide, MCU, ECU…',   cls: '' },
+    { key: 'dialogue',    label: 'Dialogue',    ph: 'Key dialogue…',           cls: '' },
+    { key: 'description', label: 'Description', ph: 'Notes, mood, lighting…',  cls: 'field-ta-desc' },
+  ];
+
+  FIELD_DEFS.forEach(({ key, label, ph, cls }) => {
+    const grp = document.createElement('div');
+    grp.className = 'field-group';
+    grp.innerHTML = `
+      <label class="field-label">${label}</label>
+      <textarea class="field-ta ${cls}" placeholder="${ph}" rows="1">${esc(card[key])}</textarea>
+    `;
+    const ta = grp.querySelector('textarea');
+    ta.addEventListener('input', () => autoGrow(ta));
+    ta.addEventListener('change', () => {
+      sb.from('cards').update({ [key]: ta.value }).eq('id', card.id);
     });
+    fields.appendChild(grp);
+  });
 
-    // ── Board ──
-    function activeProject() { return getProject(activeId); }
+  el.appendChild(fields);
 
-    function addCard() {
-      const p = activeProject(); if (!p) return;
-      p.counter++;
-      p.cards.push({ id: p.counter, media: null, mediaDataUrl: null, mediaType: null, scene: '', shot: '', dialogue: '', description: '' });
-      scheduleSave();
-      renderBoard();
-    }
+  // footer
+  const footer = document.createElement('div');
+  footer.className = 'card-footer';
+  footer.innerHTML = `
+    <span class="card-num">#${num}</span>
+    <button class="card-del" title="Delete card"><i class="ti ti-trash"></i></button>
+  `;
+  footer.querySelector('.card-del').addEventListener('click', () => deleteCard(card.id, el));
+  el.appendChild(footer);
 
-    function removeCard(id) {
-      const p = activeProject(); if (!p) return;
-      p.cards = p.cards.filter(c => c.id !== id);
-      scheduleSave();
-      renderBoard();
-    }
+  return el;
+}
 
-    function updateCard(id, field, value) {
-      const p = activeProject(); if (!p) return;
-      const card = p.cards.find(c => c.id === id);
-      if (card) { card[field] = value; scheduleSave(); }
-    }
+// ─── image strip ─────────────────────────────────
+function buildStrip(cardId, images) {
+  const strip = document.createElement('div');
+  strip.className = 'card-strip';
+  strip.dataset.cardId = cardId;
 
-    function fileToDataUrl(file) {
-      return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = e => res(e.target.result);
-        r.onerror = rej;
-        r.readAsDataURL(file);
+  if (!images.length) {
+    strip.appendChild(makePlaceholder(cardId, strip));
+  } else {
+    images.forEach(img => strip.appendChild(makeImgItem(img, cardId, strip)));
+    strip.appendChild(makeAddBtn(cardId, strip));
+  }
+
+  setupDropZone(strip, cardId);
+  return strip;
+}
+
+function makePlaceholder(cardId, strip) {
+  const ph = document.createElement('div');
+  ph.className = 'strip-placeholder';
+  ph.innerHTML = `<i class="ti ti-photo-plus"></i><span>drag &amp; drop · click · paste</span>`;
+  ph.addEventListener('click', () => openPicker(cardId, strip));
+  return ph;
+}
+
+function makeImgItem(imgRow, cardId, strip) {
+  const wrap = document.createElement('div');
+  wrap.className = 'img-item';
+  wrap.dataset.imgId = imgRow.id;
+  const img = document.createElement('img');
+  img.src = imgRow.image_url;
+  img.loading = 'lazy';
+  const rm = document.createElement('button');
+  rm.className = 'img-item-rm';
+  rm.title = 'Remove image';
+  rm.innerHTML = '<i class="ti ti-x"></i>';
+  rm.addEventListener('click', e => { e.stopPropagation(); removeImage(imgRow, wrap, strip, cardId); });
+  wrap.appendChild(img);
+  wrap.appendChild(rm);
+  return wrap;
+}
+
+function makeAddBtn(cardId, strip) {
+  const btn = document.createElement('button');
+  btn.className = 'strip-add-btn';
+  btn.title = 'Add image';
+  btn.innerHTML = '<i class="ti ti-plus"></i>';
+  btn.addEventListener('click', () => openPicker(cardId, strip));
+  return btn;
+}
+
+async function removeImage(imgRow, wrapEl, strip, cardId) {
+  wrapEl.style.opacity = '0.4';
+  try {
+    const u = new URL(imgRow.image_url);
+    const path = decodeURIComponent(u.pathname.split('/object/public/card-images/')[1]);
+    if (path) await sb.storage.from('card-images').remove([path]);
+  } catch (_) {}
+  await sb.from('card_images').delete().eq('id', imgRow.id);
+  wrapEl.remove();
+  const hasImg = strip.querySelector('.img-item');
+  if (!hasImg) {
+    strip.querySelector('.strip-add-btn')?.remove();
+    strip.appendChild(makePlaceholder(cardId, strip));
+  }
+}
+
+// ─── file picker ─────────────────────────────────
+function openPicker(cardId, strip) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+  inp.addEventListener('change', async () => {
+    for (const f of inp.files) await uploadFile(f, cardId, strip);
+  });
+  inp.click();
+}
+
+// ─── drag & drop ─────────────────────────────────
+function setupDropZone(strip, cardId) {
+  let n = 0;
+  strip.addEventListener('dragenter', e => {
+    e.preventDefault(); n++;
+    strip.classList.add('drag-over');
+  });
+  strip.addEventListener('dragleave', () => {
+    if (--n <= 0) { n = 0; strip.classList.remove('drag-over'); }
+  });
+  strip.addEventListener('dragover', e => e.preventDefault());
+  strip.addEventListener('drop', async e => {
+    e.preventDefault(); n = 0; strip.classList.remove('drag-over');
+    const files = [...(e.dataTransfer.files || [])].filter(f => f.type.startsWith('image/'));
+    for (const f of files) await uploadFile(f, cardId, strip);
+  });
+}
+
+// ─── paste ───────────────────────────────────────
+document.addEventListener('paste', async e => {
+  // find the strip nearest to the hovered or focused element
+  const strip =
+    document.querySelector('.card-strip:hover') ||
+    document.activeElement?.closest('.card')?.querySelector('.card-strip');
+  if (!strip) return;
+  const cardId = strip.dataset.cardId;
+  if (!cardId) return;
+
+  const items = [...(e.clipboardData.items || [])];
+  const imgItem = items.find(i => i.type.startsWith('image/'));
+  if (imgItem) {
+    const file = imgItem.getAsFile();
+    if (file) { await uploadFile(file, cardId, strip); return; }
+  }
+  const textItem = items.find(i => i.type === 'text/plain');
+  if (textItem) {
+    textItem.getAsString(async url => {
+      url = url.trim();
+      if (IMG_URL_RE.test(url) || /^https?:\/\/.+\.(png|jpe?g|gif|webp|avif)/i.test(url)) {
+        await uploadFromUrl(url, cardId, strip);
+      }
+    });
+  }
+});
+
+// ─── upload helpers ───────────────────────────────
+async function uploadFile(file, cardId, strip) {
+  const isGif = file.type === 'image/gif';
+  const ext   = isGif ? 'gif' : 'webp';
+  const path  = `${curProjectId}/${cardId}-${Date.now()}.${ext}`;
+
+  setStripLoading(strip, true);
+
+  const blob = isGif ? file : await toWebp(file);
+  const { error: upErr } = await sb.storage
+    .from('card-images')
+    .upload(path, blob, { contentType: isGif ? 'image/gif' : 'image/webp', upsert: false });
+
+  if (upErr) { toast('Upload failed'); console.error(upErr); setStripLoading(strip, false); return; }
+
+  const { data: { publicUrl } } = sb.storage.from('card-images').getPublicUrl(path);
+  const { count } = await sb.from('card_images')
+    .select('*', { count: 'exact', head: true })
+    .eq('card_id', cardId);
+
+  const { data: imgRow, error: dbErr } = await sb.from('card_images').insert({
+    card_id:    cardId,
+    project_id: curProjectId,
+    position:   count ?? 0,
+    image_url:  publicUrl,
+  }).select().single();
+
+  setStripLoading(strip, false);
+  if (dbErr) { toast('DB error'); console.error(dbErr); return; }
+  appendToStrip(imgRow, cardId, strip);
+}
+
+async function uploadFromUrl(url, cardId, strip) {
+  setStripLoading(strip, true);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    setStripLoading(strip, false);
+    await uploadFile(new File([blob], 'image', { type: blob.type || 'image/webp' }), cardId, strip);
+  } catch (err) {
+    setStripLoading(strip, false);
+    toast('Could not fetch that URL');
+    console.error(err);
+  }
+}
+
+async function toWebp(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      c.toBlob(resolve, 'image/webp', 0.92);
+    };
+    img.src = url;
+  });
+}
+
+function appendToStrip(imgRow, cardId, strip) {
+  strip.querySelector('.strip-placeholder')?.remove();
+  const addBtn = strip.querySelector('.strip-add-btn');
+  if (addBtn) addBtn.remove();
+  strip.appendChild(makeImgItem(imgRow, cardId, strip));
+  strip.appendChild(makeAddBtn(cardId, strip));
+  strip.scrollLeft = strip.scrollWidth;
+}
+
+function setStripLoading(strip, show) {
+  let ov = strip.querySelector('.loading-overlay');
+  if (show && !ov) {
+    ov = document.createElement('div');
+    ov.className = 'loading-overlay';
+    ov.innerHTML = '<div class="spinner"></div>';
+    strip.appendChild(ov);
+  } else if (!show && ov) ov.remove();
+}
+
+// ─── add / delete card ────────────────────────────
+async function addCard() {
+  const grid = $('board-grid');
+  const pos  = grid.querySelectorAll('.card').length;
+
+  const { data: card, error } = await sb.from('cards').insert({
+    project_id: curProjectId,
+    position: pos,
+    scene: '', shot: '', dialogue: '', description: '',
+  }).select().single();
+
+  if (error) { toast('Failed to add card'); return; }
+  grid.querySelector('.empty-state')?.remove();
+  const el = buildCard(card, [], pos + 1);
+  grid.appendChild(el);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function deleteCard(cardId, el) {
+  if (!confirm('Delete this card?')) return;
+  el.style.opacity = '0.4'; el.style.pointerEvents = 'none';
+
+  const { data: imgs } = await sb.from('card_images').select('image_url').eq('card_id', cardId);
+  if (imgs?.length) {
+    const paths = imgs.map(i => {
+      try {
+        const u = new URL(i.image_url);
+        return decodeURIComponent(u.pathname.split('/object/public/card-images/')[1]);
+      } catch { return null; }
+    }).filter(Boolean);
+    if (paths.length) await sb.storage.from('card-images').remove(paths);
+  }
+  await sb.from('card_images').delete().eq('card_id', cardId);
+  await sb.from('cards').delete().eq('id', cardId);
+  el.remove();
+
+  $('board-grid').querySelectorAll('.card').forEach((c, i) => {
+    c.querySelector('.card-num').textContent = `#${i + 1}`;
+    c.dataset.num = i + 1;
+  });
+
+  if (!$('board-grid').querySelector('.card')) {
+    $('board-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <i class="ti ti-cards"></i><p>No cards yet. Hit "Add card".</p></div>`;
+  }
+}
+
+// ─── PDF export ───────────────────────────────────
+async function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const cards = [...$('board-grid').querySelectorAll('.card')];
+  if (!cards.length) { toast('No cards to export'); return; }
+
+  $('export-progress').classList.remove('hidden');
+  const fill  = $('prog-fill');
+  const label = $('prog-label');
+
+  // fetch all card data in one query
+  const cardIds = cards.map(c => c.dataset.id);
+  const { data: cardRows } = await sb.from('cards').select('*').in('id', cardIds);
+  const { data: allImgs  } = await sb.from('card_images').select('*').in('card_id', cardIds)
+    .order('position', { ascending: true });
+
+  const cardMap = Object.fromEntries((cardRows || []).map(c => [c.id, c]));
+  const imgMap  = {};
+  (allImgs || []).forEach(i => (imgMap[i.card_id] = imgMap[i.card_id] || []).push(i));
+
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const PW = 210, PH = 297, M = 16, UW = PW - M * 2;
+
+  for (let i = 0; i < cards.length; i++) {
+    const cid  = cards[i].dataset.id;
+    const cnum = cards[i].dataset.num;
+    label.textContent = `Card ${i + 1} of ${cards.length}`;
+    fill.style.width  = `${(i / cards.length) * 100}%`;
+    if (i > 0) pdf.addPage();
+
+    let y = M;
+    const cardImgs = imgMap[cid] || [];
+
+    if (cardImgs.length) {
+      const MAX_H = 70;
+      let x = M;
+      const rendered = [];
+
+      for (const ci of cardImgs) {
+        const dataUrl = await imgToDataUrl(ci.image_url);
+        if (!dataUrl) continue;
+        const { w: nw, h: nh } = await imgDims(dataUrl);
+        const h = MAX_H;
+        const w = h * (nw / nh);
+        if (x + w > PW - M + 1) break;
+        rendered.push({ dataUrl, x, y: y, w, h });
+        x += w + 3;
+      }
+
+      rendered.forEach(({ dataUrl, x, y, w, h }) => {
+        pdf.addImage(dataUrl, 'JPEG', x, y, w, h);
       });
+      y += MAX_H + 8;
     }
 
-    async function handleFile(cardId, file) {
-      if (!file) return;
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) return;
-      const p = activeProject(); if (!p) return;
-      const card = p.cards.find(c => c.id === cardId); if (!card) return;
-      const dataUrl = await fileToDataUrl(file);
-      card.media = { url: dataUrl, type: file.type };
-      card.mediaDataUrl = dataUrl;
-      card.mediaType = file.type;
-      scheduleSave();
-      renderBoard();
+    const row = cardMap[cid] || {};
+    const FIELDS = [
+      { label: 'SCENE',       key: 'scene' },
+      { label: 'SHOT TYPE',   key: 'shot' },
+      { label: 'DIALOGUE',    key: 'dialogue' },
+      { label: 'DESCRIPTION', key: 'description' },
+    ];
+    for (const f of FIELDS) {
+      const val = row[f.key] || '';
+      if (!val) continue;
+      pdf.setFontSize(7); pdf.setTextColor(160, 155, 148);
+      pdf.text(f.label, M, y); y += 4;
+      pdf.setFontSize(11); pdf.setTextColor(28, 28, 26);
+      const lines = pdf.splitTextToSize(val, UW);
+      pdf.text(lines, M, y); y += lines.length * 5.5 + 5;
+      if (y > PH - M - 12) break;
     }
 
-    function handleMediaInput(cardId, input) { handleFile(cardId, input.files[0]); }
+    pdf.setFontSize(8); pdf.setTextColor(180, 175, 168);
+    pdf.text(`Card #${cnum}`, M, PH - M);
+    pdf.text(curProjectName, PW / 2, PH - M, { align: 'center' });
+  }
 
-    function mediaTag(card) {
-      if (!card.media && !card.mediaDataUrl) return '';
-      const url = card.mediaDataUrl || card.media.url;
-      const type = card.mediaType || card.media.type;
-      if (type === 'image/gif' || type.startsWith('image/')) return `<img src="${url}" alt="card media">`;
-      if (type.startsWith('video/')) return `<video src="${url}" autoplay loop muted playsinline></video>`;
-      return '';
-    }
+  fill.style.width = '100%';
+  label.textContent = 'Saving…';
+  await new Promise(r => setTimeout(r, 250));
 
-    function renderBoard() {
-      const p = activeProject();
-      const board = document.getElementById('board');
-      if (!board || !p) return;
+  const fname = `${curProjectName.replace(/\s+/g,'-').toLowerCase()}-${slugDate()}.pdf`;
+  pdf.save(fname);
+  $('export-progress').classList.add('hidden');
+  fill.style.width = '0%';
+  toast('PDF exported!');
+}
 
-      if (p.cards.length === 0) {
-        board.innerHTML = `<div class="empty-state"><i class="ti ti-photo" aria-hidden="true"></i><span>No cards yet — click Add card to start</span></div>`;
-        return;
-      }
-
-      board.innerHTML = p.cards.map((card, idx) => {
-        const num = String(idx + 1).padStart(2, '0');
-        const hasMedia = !!(card.mediaDataUrl || (card.media && card.media.url));
-        return `
-          <div class="card" data-id="${card.id}">
-            <div class="card-media-wrap${hasMedia ? '' : ' empty'}">
-              <div class="card-media-inner">
-                ${mediaTag(card)}
-                ${!hasMedia ? `<div class="media-hint"><i class="ti ti-photo" aria-hidden="true"></i><span class="label">Image / GIF</span><span class="sublabel">drag &amp; drop · click · paste</span></div>` : ''}
-              </div>
-              <div class="drop-zone" data-cardid="${card.id}" onclick="document.getElementById('file-${card.id}').click()">
-                <div class="drop-zone-icon"><i class="ti ti-pencil" aria-hidden="true"></i></div>
-                <div class="drag-over-label"><i class="ti ti-upload" aria-hidden="true"></i><span>drop to add</span></div>
-              </div>
-            </div>
-            <input type="file" id="file-${card.id}" class="hidden-input" accept="image/*,video/*" onchange="handleMediaInput(${card.id}, this)">
-            <div class="card-fields">
-              <div class="field">
-                <label class="field-label" for="scene-${card.id}">Scene</label>
-                <input type="text" id="scene-${card.id}" placeholder="e.g. Ext. rooftop — dusk" value="${(card.scene||'').replace(/"/g,'&quot;')}" oninput="updateCard(${card.id},'scene',this.value)">
-              </div>
-              <div class="field">
-                <label class="field-label" for="shot-${card.id}">Shot type</label>
-                <input type="text" id="shot-${card.id}" placeholder="e.g. Close-up, wide shot…" value="${(card.shot||'').replace(/"/g,'&quot;')}" oninput="updateCard(${card.id},'shot',this.value)">
-              </div>
-              <div class="field">
-                <label class="field-label" for="dialogue-${card.id}">Dialogue</label>
-                <textarea id="dialogue-${card.id}" placeholder="Character dialogue or VO…" rows="2" oninput="updateCard(${card.id},'dialogue',this.value)">${card.dialogue||''}</textarea>
-              </div>
-              <div class="field">
-                <label class="field-label" for="desc-${card.id}">Description</label>
-                <textarea id="desc-${card.id}" placeholder="Mood, action, notes…" rows="2" oninput="updateCard(${card.id},'description',this.value)">${card.description||''}</textarea>
-              </div>
-            </div>
-            <div class="card-footer">
-              <span class="card-num">${num}</span>
-              <button class="remove-btn" onclick="removeCard(${card.id})" aria-label="Remove card ${num}">
-                <i class="ti ti-trash" aria-hidden="true"></i>
-              </button>
-            </div>
-          </div>`;
-      }).join('');
-
-      // Attach drag listeners
-      board.querySelectorAll('.drop-zone').forEach(zone => {
-        const cardId = parseInt(zone.dataset.cardid);
-        let dc = 0;
-        zone.addEventListener('dragenter', e => { e.preventDefault(); dc++; zone.classList.add('drag-over'); });
-        zone.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
-        zone.addEventListener('dragleave', e => { if (--dc <= 0) { dc = 0; zone.classList.remove('drag-over'); } });
-        zone.addEventListener('drop', e => {
-          e.preventDefault(); dc = 0; zone.classList.remove('drag-over');
-          handleFile(cardId, e.dataTransfer.files[0]);
-        });
-      });
-    }
-
-    // ── PDF Export ──
-    async function exportPDF() {
-      const p = activeProject();
-      if (!p || p.cards.length === 0) return;
-      const btn = document.getElementById('pdf-btn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="ti ti-loader" aria-hidden="true"></i> Generating…';
-
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const margin = 14;
-      const cardW = 210 - margin * 2;
-      const surface = document.getElementById('pdf-surface');
-
-      for (let i = 0; i < p.cards.length; i++) {
-        const card = p.cards[i];
-        const node = document.createElement('div');
-        node.className = 'pdf-card';
-        node.style.width = '1080px';
-
-        const mediaDiv = document.createElement('div');
-        mediaDiv.className = 'pdf-card-media';
-        if (card.mediaDataUrl && card.mediaType && !card.mediaType.startsWith('video/')) {
-          const img = document.createElement('img');
-          img.src = card.mediaDataUrl;
-          mediaDiv.appendChild(img);
-        } else {
-          mediaDiv.innerHTML = `<div class="pdf-no-media">${card.mediaDataUrl ? 'video — not rendered in PDF' : 'no image'}</div>`;
-        }
-        node.appendChild(mediaDiv);
-
-        const fieldsDiv = document.createElement('div');
-        fieldsDiv.className = 'pdf-card-fields';
-        [['Scene','scene'],['Shot type','shot'],['Dialogue','dialogue'],['Description','description']].forEach(([label, key]) => {
-          const val = card[key] || '';
-          fieldsDiv.innerHTML += `<div class="pdf-field"><div class="pdf-field-label">${label}</div><div class="pdf-field-value${val ? '' : ' empty'}">${val || '—'}</div></div>`;
-        });
-        node.appendChild(fieldsDiv);
-
-        const footer = document.createElement('div');
-        footer.className = 'pdf-card-footer';
-        footer.innerHTML = `<span class="pdf-card-num">${String(i+1).padStart(2,'0')}</span>`;
-        node.appendChild(footer);
-
-        surface.innerHTML = '';
-        surface.appendChild(node);
-
-        const canvas = await html2canvas(node, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        const ratio = canvas.height / canvas.width;
-        const pdfImgH = cardW * ratio;
-        const yOffset = Math.max(margin, (297 - pdfImgH) / 2);
-
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', margin, yOffset, cardW, pdfImgH);
-      }
-
-      surface.innerHTML = '';
-      pdf.save(`${p.name.replace(/\s+/g,'-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.pdf`);
-      btn.disabled = false;
-      btn.innerHTML = '<i class="ti ti-file-type-pdf" aria-hidden="true"></i> Export PDF';
-    }
-
-    // ── Paste from clipboard (Ctrl+V / Cmd+V) ──
-    // Tracks which card the user last interacted with
-    let focusedCardId = null;
-
-    document.addEventListener('focusin', e => {
-      const card = e.target.closest('.card');
-      if (card) focusedCardId = parseInt(card.dataset.id);
+async function imgToDataUrl(url) {
+  try {
+    const res  = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise(resolve => {
+      const r = new FileReader();
+      r.onload = () => {
+        if (blob.type === 'image/gif') { resolve(r.result); return; }
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth; c.height = img.naturalHeight;
+          c.getContext('2d').drawImage(img, 0, 0);
+          resolve(c.toDataURL('image/jpeg', 0.88));
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(blob);
     });
-    document.addEventListener('click', e => {
-      const card = e.target.closest('.card');
-      if (card) focusedCardId = parseInt(card.dataset.id);
-    });
+  } catch { return null; }
+}
 
-    document.addEventListener('paste', async function(e) {
-      if (!activeId) return;
-      var p = activeProject();
-      if (!p || p.cards.length === 0) return;
+function imgDims(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    img.onerror = () => resolve({ w: 1, h: 1 });
+    img.src = dataUrl;
+  });
+}
 
-      var items = e.clipboardData && e.clipboardData.items;
-      if (!items) return;
-
-      // Priority 1: actual image file in clipboard
-      for (var i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith('image/')) {
-          e.preventDefault();
-          var file = items[i].getAsFile();
-          if (!file) continue;
-          var targetId = focusedCardId;
-          if (!targetId || !p.cards.find(function(c) { return c.id === targetId; })) {
-            targetId = p.cards[p.cards.length - 1].id;
-          }
-          flashCard(targetId);
-          await handleFile(targetId, file);
-          return;
-        }
-      }
-
-      // Priority 2: text that looks like an image URL
-      for (var j = 0; j < items.length; j++) {
-        if (items[j].type === 'text/plain') {
-          items[j].getAsString(async function(text) {
-            text = text.trim();
-            var imageExtensions = /\.(jpg|jpeg|png|gif|webp|avif|svg)(\?.*)?$/i;
-            var isImageUrl = (text.startsWith('http') && imageExtensions.test(text));
-            // Also accept CloudFront and known image CDN URLs without extension
-            var isCDN = text.startsWith('http') && (
-              text.includes('cloudfront.net') ||
-              text.includes('cloudinary.com') ||
-              text.includes('imgix.net') ||
-              text.includes('shotdeck.com') ||
-              text.includes('frameset.app')
-            );
-            if (!isImageUrl && !isCDN) return;
-
-            var targetId = focusedCardId;
-            if (!targetId || !p.cards.find(function(c) { return c.id === targetId; })) {
-              targetId = p.cards[p.cards.length - 1].id;
-            }
-
-            // Fetch the image and convert to file
-            try {
-              var response = await fetch(text);
-              var blob = await response.blob();
-              var mimeType = blob.type || 'image/jpeg';
-              var filename = 'image.' + mimeType.split('/')[1];
-              var file = new File([blob], filename, { type: mimeType });
-              flashCard(targetId);
-              await handleFile(targetId, file);
-            } catch(err) {
-              console.log('Could not fetch image URL:', err);
-            }
-          });
-          return;
-        }
-      }
-    });
-
-    function flashCard(id) {
-      var cardEl = document.querySelector('.card[data-id="' + id + '"]');
-      if (!cardEl) return;
-      cardEl.style.outline = '2px solid var(--drag-border)';
-      cardEl.style.outlineOffset = '2px';
-      setTimeout(function() {
-        cardEl.style.outline = '';
-        cardEl.style.outlineOffset = '';
-      }, 800);
-    }
-
-    // ── Inject from extension (Frameset / Shotdeck) ──
-    document.addEventListener('moodboard-inject-image', function(e) {
-      var file = e.detail;
-      if (!file) return;
-      if (!activeId) return;
-      var p = activeProject();
-      if (!p || p.cards.length === 0) return;
-      var targetId = focusedCardId;
-      if (!targetId || !p.cards.find(function(c) { return c.id === targetId; })) {
-        targetId = p.cards[p.cards.length - 1].id;
-      }
-      handleFile(targetId, file);
-    });
-
-    // ── Init ──
-    load();
-    renderHome();
-  </script>
+// ─── boot ─────────────────────────────────────────
+(async function boot() {
+  const pid = getQPid();
+  if (pid) {
+    const { data: proj } = await sb.from('projects').select('name').eq('id', pid).single();
+    if (proj) { openBoard(pid, proj.name); return; }
+  }
+  openHome();
+})();
+</script>
 </body>
 </html>
