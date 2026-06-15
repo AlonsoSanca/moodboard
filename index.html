@@ -943,32 +943,50 @@ document.addEventListener('paste', async e => {
 
 // ─── upload helpers ───────────────────────────────
 async function uploadFile(file, cardId, strip) {
-  var isGif     = file.type === 'image/gif';
-  var extension = isGif ? 'gif' : 'webp';
-  var mimeType  = isGif ? 'image/gif' : 'image/webp';
-  var fileName  = cardId + '-' + Date.now() + '.' + extension;
-  const path    = `${curProjectId}/${fileName}`;
-
   setStripLoading(strip, true);
 
-  // GIFs are uploaded as-is — no canvas conversion, animation preserved
-  const blob = isGif ? file : await toWebp(file);
+  // ── GIF early exit: upload original file, never convert ──────────────
+  if (file.type === 'image/gif') {
+    var gifName = cardId + '-' + Date.now() + '.gif';
+    var gifPath = curProjectId + '/' + gifName;
+    var { error: gifUpErr } = await sbStore.storage
+      .from('card-images')
+      .upload(gifPath, file, { contentType: 'image/gif', upsert: false });
+    if (gifUpErr) {
+      console.error('GIF upload error:', gifUpErr);
+      toast('Upload failed'); setStripLoading(strip, false); return;
+    }
+    var { data: gifUrlData } = sbStore.storage.from('card-images').getPublicUrl(gifPath);
+    const { count: gc } = await sb.from('card_images')
+      .select('*', { count: 'exact', head: true }).eq('card_id', cardId);
+    const { data: gifRow, error: gifDbErr } = await sb.from('card_images').insert({
+      card_id: cardId, project_id: curProjectId,
+      position: gc ?? 0, image_url: gifUrlData.publicUrl,
+    }).select().single();
+    setStripLoading(strip, false);
+    if (gifDbErr) { toast('DB error'); console.error(gifDbErr); return; }
+    appendToStrip(gifRow, cardId, strip);
+    return; // critical — never fall through to webp conversion
+  }
+  // ── end GIF block ─────────────────────────────────────────────────────
+
+  // non-GIF: convert to webp via canvas, then upload
+  var fileName = cardId + '-' + Date.now() + '.webp';
+  const path   = `${curProjectId}/${fileName}`;
+  const blob   = await toWebp(file);
   const { error: upErr } = await sbStore.storage
     .from('card-images')
-    .upload(path, blob, { contentType: mimeType, upsert: false });
+    .upload(path, blob, { contentType: 'image/webp', upsert: false });
 
   if (upErr) { toast('Upload failed'); console.error(upErr); setStripLoading(strip, false); return; }
 
   const { data: { publicUrl } } = sbStore.storage.from('card-images').getPublicUrl(path);
   const { count } = await sb.from('card_images')
-    .select('*', { count: 'exact', head: true })
-    .eq('card_id', cardId);
+    .select('*', { count: 'exact', head: true }).eq('card_id', cardId);
 
   const { data: imgRow, error: dbErr } = await sb.from('card_images').insert({
-    card_id:    cardId,
-    project_id: curProjectId,
-    position:   count ?? 0,
-    image_url:  publicUrl,
+    card_id: cardId, project_id: curProjectId,
+    position: count ?? 0, image_url: publicUrl,
   }).select().single();
 
   setStripLoading(strip, false);
