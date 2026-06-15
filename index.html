@@ -909,8 +909,11 @@ function attachDropZone(el, cardId, strip) {
     e.stopPropagation();
     dc = 0;
     strip.classList.remove('drag-over');
-    var file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) uploadFile(file, cardId, strip);
+    var droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.name && droppedFile.name.toLowerCase().endsWith('.gif')) {
+      droppedFile = new File([droppedFile], droppedFile.name, { type: 'image/gif' });
+    }
+    if (droppedFile) uploadFile(droppedFile, cardId, strip);
   }, false);
 }
 
@@ -997,11 +1000,16 @@ async function uploadFile(file, cardId, strip) {
 async function uploadFromUrl(url, cardId, strip) {
   setStripLoading(strip, true);
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('fetch failed');
-    const blob = await res.blob();
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('fetch failed');
+    var responseBlob = await response.blob();
+    var isGifUrl = url.trim().toLowerCase().includes('.gif') ||
+                   response.headers.get('content-type') === 'image/gif';
+    var finalMime = isGifUrl ? 'image/gif' : (responseBlob.type || 'image/jpeg');
+    var ext = isGifUrl ? 'gif' : finalMime.split('/')[1];
+    var file = new File([responseBlob], 'image.' + ext, { type: finalMime });
     setStripLoading(strip, false);
-    await uploadFile(new File([blob], 'image', { type: blob.type || 'image/webp' }), cardId, strip);
+    await uploadFile(file, cardId, strip);
   } catch (err) {
     setStripLoading(strip, false);
     toast('Could not fetch that URL');
