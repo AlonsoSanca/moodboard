@@ -1225,17 +1225,6 @@ async function exportPDF() {
   const surface = $('pdf-render-surface');
   surface.innerHTML = '';
 
-  // ── Helper: snapshot GIF current frame → static dataURL ──────
-  function gifSnapshot(img) {
-    try {
-      const c = document.createElement('canvas');
-      c.width  = img.naturalWidth  || img.width  || 300;
-      c.height = img.naturalHeight || img.height || 200;
-      c.getContext('2d').drawImage(img, 0, 0);
-      return c.toDataURL('image/png');
-    } catch { return null; }
-  }
-
   // ── Helper: wait for all <img> in an element to load ─────────
   function waitForImages(el) {
     return Promise.all([...el.querySelectorAll('img')].map(img => {
@@ -1243,7 +1232,7 @@ async function exportPDF() {
       return new Promise(resolve => {
         img.onload  = resolve;
         img.onerror = resolve;
-        setTimeout(resolve, 6000); // safety timeout
+        setTimeout(resolve, 15000);
       });
     }));
   }
@@ -1267,19 +1256,15 @@ async function exportPDF() {
       '.card-del, .img-item-rm, .strip-add-btn, .drop-zone-overlay, .ref-url-spinner, .loading-overlay'
     ).forEach(el => el.remove());
 
-    // Snapshot GIF frames (replace animated src with static canvas frame)
+    // Convert all images to base64 before html2canvas to avoid CORS issues
     const origImgs  = [...orig.querySelectorAll('img')];
     const cloneImgs = [...clone.querySelectorAll('img')];
-    origImgs.forEach((src, idx) => {
+    await Promise.all(origImgs.map(async (origImg, idx) => {
       const dst = cloneImgs[idx];
       if (!dst) return;
-      if (src.src.includes('.gif')) {
-        const snap = gifSnapshot(src);
-        if (snap) dst.src = snap;
-      } else {
-        dst.src = src.src; // keep original src for CORS fetch
-      }
-    });
+      const b64 = await imageUrlToBase64(origImg.src);
+      if (b64) dst.src = b64;
+    }));
 
     surface.appendChild(clone);
     await waitForImages(clone);
@@ -1287,10 +1272,11 @@ async function exportPDF() {
 
     const canvas = await html2canvas(clone, {
       scale: 2,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      allowTaint: false,
+      backgroundColor: '#f9f8f6',
+      useCORS: false,
+      allowTaint: true,
       logging: false,
+      imageTimeout: 15000,
     });
     canvases.push(canvas);
     surface.innerHTML = '';
@@ -1342,6 +1328,20 @@ async function exportPDF() {
   $('export-progress').classList.add('hidden');
   fill.style.width = '0%';
   toast('PDF exported!');
+}
+
+async function imageUrlToBase64(url) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return null;
+  }
 }
 
 // ─── boot ─────────────────────────────────────────
