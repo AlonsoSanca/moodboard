@@ -837,15 +837,19 @@ function buildRefUrlField(card, strip) {
   grp.appendChild(lbl);
   grp.appendChild(inp);
 
+  var isUploading = false;
+
   async function handleUrl() {
+    if (isUploading) return;
     const url = inp.value.trim();
     if (!url) return;
 
     // always persist to DB
     sb.from('cards').update({ reference_url: url }).eq('id', card.id);
 
-    // if it looks like an image, fetch and upload
+    // if it looks like an image, fetch and upload — guard against double calls
     if (isImageUrl(url)) {
+      isUploading = true;
       const spinner = document.createElement('div');
       spinner.className = 'ref-url-spinner';
       grp.appendChild(spinner);
@@ -855,11 +859,12 @@ function buildRefUrlField(card, strip) {
       } finally {
         spinner.remove();
         inp.disabled = false;
+        isUploading = false;
       }
     }
   }
 
-  inp.addEventListener('paste', e => {
+  inp.addEventListener('paste', () => {
     // let the paste land in the input first, then handle
     setTimeout(handleUrl, 0);
   });
@@ -870,6 +875,7 @@ function buildRefUrlField(card, strip) {
 
   // save on blur without triggering fetch again
   inp.addEventListener('blur', () => {
+    if (isUploading) return;
     const url = inp.value.trim();
     if (url) sb.from('cards').update({ reference_url: url }).eq('id', card.id);
   });
@@ -914,12 +920,11 @@ function makeImgItem(imgRow, cardId, strip) {
   const img = document.createElement('img');
   img.src = imgRow.image_url;
   img.loading = 'lazy';
-  // GIFs must not be constrained — let them play at natural size
-  if (/\.gif(\?|$)/i.test(imgRow.image_url)) {
-    img.style.objectFit = 'unset';
-    img.style.height = 'auto';
-    img.style.alignSelf = 'center';
-  }
+  var isGif = imgRow.image_url.includes('.gif');
+  img.style.height     = isGif ? 'auto'    : '200px';
+  img.style.objectFit  = isGif ? 'contain' : 'cover';
+  img.style.maxHeight  = isGif ? '300px'   : '200px';
+  img.style.alignSelf  = isGif ? 'center'  : 'stretch';
   const rm = document.createElement('button');
   rm.className = 'img-item-rm';
   rm.title = 'Remove image';
