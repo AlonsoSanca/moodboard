@@ -1199,15 +1199,16 @@ async function deleteCard(cardId, el) {
 // ─── PDF export ───────────────────────────────────
 async function exportPDF() {
   const { jsPDF } = window.jspdf;
-  const cards = [...$('board-grid').querySelectorAll('.card')];
-  if (!cards.length) { toast('No cards to export'); return; }
+  const cardEls = [...$('board-grid').querySelectorAll('.card')];
+  if (!cardEls.length) { toast('No cards to export'); return; }
 
   $('export-progress').classList.remove('hidden');
   const fill  = $('prog-fill');
   const label = $('prog-label');
 
-  // fetch all card data in one query
-  const cardIds = cards.map(c => c.dataset.id);
+  // ── 1. Fetch DB data ──────────────────────────────────────────
+  label.textContent = 'Loading data…'; fill.style.width = '5%';
+  const cardIds = cardEls.map(c => c.dataset.id);
   const { data: cardRows } = await sb.from('cards').select('*').in('id', cardIds);
   const { data: allImgs  } = await sb.from('card_images').select('*').in('card_id', cardIds)
     .order('position', { ascending: true });
@@ -1216,104 +1217,171 @@ async function exportPDF() {
   const imgMap  = {};
   (allImgs || []).forEach(i => (imgMap[i.card_id] = imgMap[i.card_id] || []).push(i));
 
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const PW = 210, PH = 297, M = 16, UW = PW - M * 2;
-
-  for (let i = 0; i < cards.length; i++) {
-    const cid  = cards[i].dataset.id;
-    const cnum = cards[i].dataset.num;
-    label.textContent = `Card ${i + 1} of ${cards.length}`;
-    fill.style.width  = `${(i / cards.length) * 100}%`;
-    if (i > 0) pdf.addPage();
-
-    let y = M;
-    const cardImgs = imgMap[cid] || [];
-
-    if (cardImgs.length) {
-      const MAX_H = 70;
-      let x = M;
-      const rendered = [];
-
-      for (const ci of cardImgs) {
-        const dataUrl = await imgToDataUrl(ci.image_url);
-        if (!dataUrl) continue;
-        const { w: nw, h: nh } = await imgDims(dataUrl);
-        const h = MAX_H;
-        const w = h * (nw / nh);
-        if (x + w > PW - M + 1) break;
-        rendered.push({ dataUrl, x, y: y, w, h });
-        x += w + 3;
-      }
-
-      rendered.forEach(({ dataUrl, x, y, w, h }) => {
-        pdf.addImage(dataUrl, 'JPEG', x, y, w, h);
-      });
-      y += MAX_H + 8;
-    }
-
-    const row = cardMap[cid] || {};
-    const FIELDS = [
-      { label: 'SCENE',       key: 'scene' },
-      { label: 'SHOT TYPE',   key: 'shot' },
-      { label: 'DIALOGUE',    key: 'dialogue' },
-      { label: 'DESCRIPTION', key: 'description' },
-    ];
-    for (const f of FIELDS) {
-      const val = row[f.key] || '';
-      if (!val) continue;
-      pdf.setFontSize(7); pdf.setTextColor(160, 155, 148);
-      pdf.text(f.label, M, y); y += 4;
-      pdf.setFontSize(11); pdf.setTextColor(28, 28, 26);
-      const lines = pdf.splitTextToSize(val, UW);
-      pdf.text(lines, M, y); y += lines.length * 5.5 + 5;
-      if (y > PH - M - 12) break;
-    }
-
-    pdf.setFontSize(8); pdf.setTextColor(180, 175, 168);
-    pdf.text(`Card #${cnum}`, M, PH - M);
-    pdf.text(curProjectName, PW / 2, PH - M, { align: 'center' });
+  // ── 2. Preload all images → JPEG base64 + natural dims ────────
+  const allUrls = [...new Set((allImgs || []).map(i => i.image_url))];
+  const imgCache = {}; // url → { dataUrl, w, h }
+  for (let i = 0; i < allUrls.length; i++) {
+    label.textContent = `Loading images (${i + 1}/${allUrls.length})…`;
+    fill.style.width = `${5 + (i / Math.max(allUrls.length, 1)) * 40}%`;
+    const entry = await pdfFetchImg(allUrls[i]);
+    if (entry) imgCache[allUrls[i]] = entry;
   }
 
+  // ── 3. Layout constants ────────────────────────────────────────
+  const PW = 297, PH = 210; // A4 landscape mm
+  const M = 10, GAP_H = 8, GAP_V = 8, COLS = 3;
+  const CARD_W = (PW - 2 * M - (COLS - 1) * GAP_H) / COLS; // ~87mm
+  const PAD = 3;       // inner card padding mm
+  const TEXT_W = CARD_W - PAD * 2;
+  const LH_VAL = 3.5;  // mm per line at 8pt
+  const LH_LBL = 2.5;  // mm per label at 6pt
+  const F_GAP  = 2;    // mm between fields
+
+  const FIELD_DEFS = [
+    { label: 'SCENE',       key: 'scene' },
+    { label: 'SHOT TYPE',   key: 'shot' },
+    { label: 'DIALOGUE',    key: 'dialogue' },
+    { label: 'DESCRIPTION', key: 'description' },
+  ];
+
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // ── 4. Helper: compute card height ────────────────────────────
+  function cardHeight(cid) {
+    let h = PAD;
+    for (const img of (imgMap[cid] || [])) {
+      const e = imgCache[img.image_url];
+      if (e) h += CARD_W * (e.h / e.w);
+    }
+    if ((imgMap[cid] || []).length) h += 2;
+    const row = cardMap[cid] || {};
+    for (const f of FIELD_DEFS) {
+      const val = row[f.key] || '';
+      if (!val) continue;
+      h += LH_LBL + 1;
+      pdf.setFontSize(8);
+      h += pdf.splitTextToSize(val, TEXT_W).length * LH_VAL + F_GAP;
+    }
+    return h + PAD + 5; // bottom pad + card-num row
+  }
+
+  // ── 5. Helper: draw page background ───────────────────────────
+  function drawBg() {
+    pdf.setFillColor(249, 248, 246);
+    pdf.rect(0, 0, PW, PH, 'F');
+  }
+
+  // ── 6. Helper: draw one card ──────────────────────────────────
+  function drawCard(cid, cnum, x, y, h) {
+    // background + border
+    pdf.setFillColor(242, 240, 236);
+    pdf.roundedRect(x, y, CARD_W, h, 2, 2, 'F');
+    pdf.setDrawColor(224, 221, 216);
+    pdf.setLineWidth(0.3);
+    pdf.roundedRect(x, y, CARD_W, h, 2, 2, 'S');
+
+    let cy = y + PAD;
+    const tx = x + PAD;
+    const row = cardMap[cid] || {};
+
+    // images stacked vertically, full card width
+    for (const img of (imgMap[cid] || [])) {
+      const e = imgCache[img.image_url];
+      if (!e) continue;
+      const ih = CARD_W * (e.h / e.w);
+      try { pdf.addImage(e.dataUrl, 'JPEG', x, cy, CARD_W, ih); }
+      catch (_) {}
+      cy += ih;
+    }
+    if ((imgMap[cid] || []).length) cy += 2;
+
+    // text fields
+    for (const f of FIELD_DEFS) {
+      const val = row[f.key] || '';
+      if (!val) continue;
+      // label
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(6);
+      pdf.setTextColor(168, 167, 162);
+      pdf.text(f.label, tx, cy);
+      cy += LH_LBL + 1;
+      // value
+      pdf.setFontSize(8);
+      pdf.setTextColor(26, 26, 24);
+      const lines = pdf.splitTextToSize(val, TEXT_W);
+      pdf.text(lines, tx, cy);
+      cy += lines.length * LH_VAL + F_GAP;
+    }
+
+    // card number — bottom right
+    pdf.setFontSize(7);
+    pdf.setTextColor(168, 167, 162);
+    pdf.text(`#${cnum}`, x + CARD_W - PAD, y + h - PAD, { align: 'right' });
+  }
+
+  // ── 7. Paginate and draw ──────────────────────────────────────
+  const rows = [];
+  for (let i = 0; i < cardEls.length; i += COLS) rows.push(cardEls.slice(i, i + COLS));
+
+  drawBg();
+  let rowY = M;
+
+  for (let ri = 0; ri < rows.length; ri++) {
+    label.textContent = `Drawing row ${ri + 1} of ${rows.length}…`;
+    fill.style.width = `${45 + (ri / rows.length) * 50}%`;
+
+    const row = rows[ri];
+    const rowH = Math.max(...row.map(c => cardHeight(c.dataset.id)));
+
+    if (ri > 0 && rowY + rowH > PH - M) {
+      pdf.addPage();
+      drawBg();
+      rowY = M;
+    }
+
+    row.forEach((cardEl, ci) => {
+      const x = M + ci * (CARD_W + GAP_H);
+      drawCard(cardEl.dataset.id, cardEl.dataset.num, x, rowY, rowH);
+    });
+
+    rowY += rowH + GAP_V;
+  }
+
+  // ── 8. Save ───────────────────────────────────────────────────
   fill.style.width = '100%';
   label.textContent = 'Saving…';
-  await new Promise(r => setTimeout(r, 250));
+  await new Promise(r => setTimeout(r, 200));
 
-  const fname = `${curProjectName.replace(/\s+/g,'-').toLowerCase()}-${slugDate()}.pdf`;
+  const fname = `${curProjectName.replace(/\s+/g, '-').toLowerCase()}-${slugDate()}.pdf`;
   pdf.save(fname);
   $('export-progress').classList.add('hidden');
   fill.style.width = '0%';
   toast('PDF exported!');
 }
 
-async function imgToDataUrl(url) {
+// fetch image and convert to JPEG base64 for PDF embedding
+async function pdfFetchImg(url) {
   try {
-    const res  = await fetch(url);
+    const res = await fetch(url);
+    if (!res.ok) return null;
     const blob = await res.blob();
     return await new Promise(resolve => {
-      const r = new FileReader();
-      r.onload = () => {
-        if (blob.type === 'image/gif') { resolve(r.result); return; }
+      const reader = new FileReader();
+      reader.onerror = () => resolve(null);
+      reader.onload = () => {
         const img = new Image();
+        img.onerror = () => resolve(null);
         img.onload = () => {
           const c = document.createElement('canvas');
           c.width = img.naturalWidth; c.height = img.naturalHeight;
           c.getContext('2d').drawImage(img, 0, 0);
-          resolve(c.toDataURL('image/jpeg', 0.88));
+          resolve({ dataUrl: c.toDataURL('image/jpeg', 0.88), w: img.naturalWidth, h: img.naturalHeight });
         };
-        img.src = r.result;
+        img.src = reader.result;
       };
-      r.readAsDataURL(blob);
+      reader.readAsDataURL(blob);
     });
   } catch { return null; }
-}
-
-function imgDims(dataUrl) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
-    img.onerror = () => resolve({ w: 1, h: 1 });
-    img.src = dataUrl;
-  });
 }
 
 // ─── boot ─────────────────────────────────────────
