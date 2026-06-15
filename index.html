@@ -1034,6 +1034,10 @@ document.addEventListener('paste', async e => {
   if (textItem) {
     textItem.getAsString(async url => {
       url = url.trim();
+      // Normalize Frameset animated webp → gif
+      if (url.includes('cloudfront.net') && url.includes('_sm_motion.webp')) {
+        url = url.replace('_sm_motion.webp', '_fs.gif');
+      }
       if (IMG_URL_RE.test(url) || /^https?:\/\/.+\.(png|jpe?g|gif|webp|avif)/i.test(url)) {
         await uploadFromUrl(url, cardId, strip);
       }
@@ -1097,6 +1101,10 @@ async function uploadFile(file, cardId, strip) {
 async function uploadFromUrl(url, cardId, strip) {
   if (strip.dataset.uploading) return;
   strip.dataset.uploading = 'true';
+  // Normalize Frameset animated webp → gif
+  if (url.includes('cloudfront.net') && url.includes('_sm_motion.webp')) {
+    url = url.replace('_sm_motion.webp', '_fs.gif');
+  }
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error('fetch failed');
