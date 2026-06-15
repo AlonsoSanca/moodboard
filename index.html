@@ -236,30 +236,13 @@ a { color: inherit; text-decoration: none; }
   background: var(--surface-2);
   border-bottom: var(--bw) solid var(--border);
 }
-.card-strip.drag-over {
-  outline: 2px dashed var(--accent);
-  outline-offset: -2px;
-}
-
-/* invisible drop-zone overlay — sits above strip children, captures drag events */
-.drop-zone-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-}
-body.is-dragging .drop-zone-overlay { pointer-events: auto; }
-.img-item-rm { z-index: 20; }
-
 /* placeholder — shown only when strip is empty */
 .strip-placeholder {
   width: 100%; padding: 32px 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 8px; color: var(--text-3); cursor: pointer;
-  transition: background 0.15s;
+  gap: 8px; color: var(--text-3);
 }
-.strip-placeholder:hover { background: var(--surface-2); }
 .strip-placeholder i { font-size: 22px; }
 .strip-placeholder span { font-family: var(--font-mono); font-size: 11px; text-align: center; }
 
@@ -888,26 +871,19 @@ function buildStrip(cardId, images) {
   strip.dataset.cardId = cardId;
 
   if (!images.length) {
-    strip.appendChild(makePlaceholder(cardId, strip));
+    strip.appendChild(makePlaceholder());
   } else {
     images.forEach(img => strip.appendChild(makeImgItem(img, cardId, strip)));
-    strip.appendChild(makeAddBtn(cardId, strip));
+    strip.appendChild(makeAddBtn());
   }
-
-  // invisible overlay that sits above all children and captures every drag event
-  const dz = document.createElement('div');
-  dz.className = 'drop-zone-overlay';
-  strip.appendChild(dz);
-  attachDropZone(dz, cardId, strip);
 
   return strip;
 }
 
-function makePlaceholder(cardId, strip) {
+function makePlaceholder() {
   const ph = document.createElement('div');
   ph.className = 'strip-placeholder';
-  ph.innerHTML = `<i class="ti ti-photo-plus"></i><span>drag &amp; drop · click · paste</span>`;
-  ph.addEventListener('click', () => openPicker(cardId, strip));
+  ph.innerHTML = `<i class="ti ti-photo-plus"></i><span>paste image or URL</span>`;
   return ph;
 }
 
@@ -933,12 +909,11 @@ function makeImgItem(imgRow, cardId, strip) {
   return wrap;
 }
 
-function makeAddBtn(cardId, strip) {
+function makeAddBtn() {
   const btn = document.createElement('button');
   btn.className = 'strip-add-btn';
-  btn.title = 'Add image';
+  btn.title = 'Paste an image or use the Reference URL field to add more';
   btn.innerHTML = '<i class="ti ti-plus"></i>';
-  btn.addEventListener('click', () => openPicker(cardId, strip));
   return btn;
 }
 
@@ -954,65 +929,8 @@ async function removeImage(imgRow, wrapEl, strip, cardId) {
   const hasImg = strip.querySelector('.img-item');
   if (!hasImg) {
     strip.querySelector('.strip-add-btn')?.remove();
-    strip.appendChild(makePlaceholder(cardId, strip));
+    strip.appendChild(makePlaceholder());
   }
-}
-
-// ─── file picker ─────────────────────────────────
-function openPicker(cardId, strip) {
-  const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
-  inp.addEventListener('change', async () => {
-    for (const f of inp.files) await uploadFile(f, cardId, strip);
-  });
-  inp.click();
-}
-
-// ─── drag & drop ─────────────────────────────────
-// track drag state on body so overlay pointer-events activates only during a drag
-var bodyDragCount = 0;
-document.addEventListener('dragenter', function() {
-  bodyDragCount++;
-  document.body.classList.add('is-dragging');
-}, false);
-document.addEventListener('dragleave', function(e) {
-  bodyDragCount--;
-  if (bodyDragCount <= 0) { bodyDragCount = 0; document.body.classList.remove('is-dragging'); }
-}, false);
-document.addEventListener('drop', function() {
-  bodyDragCount = 0;
-  document.body.classList.remove('is-dragging');
-}, false);
-
-function attachDropZone(el, cardId, strip) {
-  var dc = 0;
-  el.addEventListener('dragenter', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dc++;
-    strip.classList.add('drag-over');
-  }, false);
-  el.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'copy';
-  }, false);
-  el.addEventListener('dragleave', function(e) {
-    e.stopPropagation();
-    dc--;
-    if (dc <= 0) { dc = 0; strip.classList.remove('drag-over'); }
-  }, false);
-  el.addEventListener('drop', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dc = 0;
-    strip.classList.remove('drag-over');
-    var droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.name && droppedFile.name.toLowerCase().endsWith('.gif')) {
-      droppedFile = new File([droppedFile], droppedFile.name, { type: 'image/gif' });
-    }
-    if (droppedFile) uploadFile(droppedFile, cardId, strip);
-  }, false);
 }
 
 // ─── paste ───────────────────────────────────────
@@ -1144,8 +1062,7 @@ function appendToStrip(imgRow, cardId, strip) {
   const addBtn = strip.querySelector('.strip-add-btn');
   if (addBtn) addBtn.remove();
   strip.appendChild(makeImgItem(imgRow, cardId, strip));
-  strip.appendChild(makeAddBtn(cardId, strip));
-  strip.scrollLeft = strip.scrollWidth;
+  strip.appendChild(makeAddBtn());
 }
 
 function setStripLoading(strip, show) {
@@ -1253,7 +1170,7 @@ async function exportPDF() {
 
     // Strip interactive / decorative elements
     clone.querySelectorAll(
-      '.card-del, .img-item-rm, .strip-add-btn, .drop-zone-overlay, .ref-url-spinner, .loading-overlay'
+      '.card-del, .img-item-rm, .strip-add-btn, .ref-url-spinner, .loading-overlay'
     ).forEach(el => el.remove());
 
     // Convert all images to base64 before html2canvas to avoid CORS issues
