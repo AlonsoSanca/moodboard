@@ -457,7 +457,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_m8-Oj2dnAm9OvsVoARKc8Q_yBE1oMcm';
 // ══════════════════════════════════════════════════
 
 const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb      = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sbStore = sb; // storage uses same client; bucket policies allow public access
 
 // ─── helpers ────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -631,7 +632,7 @@ async function deleteProject(id, el) {
         return decodeURIComponent(u.pathname.split('/object/public/card-images/')[1]);
       } catch { return null; }
     }).filter(Boolean);
-    if (paths.length) await sb.storage.from('card-images').remove(paths);
+    if (paths.length) await sbStore.storage.from('card-images').remove(paths);
   }
   await sb.from('card_images').delete().eq('project_id', id);
   await sb.from('cards').delete().eq('project_id', id);
@@ -825,7 +826,7 @@ async function removeImage(imgRow, wrapEl, strip, cardId) {
   try {
     const u = new URL(imgRow.image_url);
     const path = decodeURIComponent(u.pathname.split('/object/public/card-images/')[1]);
-    if (path) await sb.storage.from('card-images').remove([path]);
+    if (path) await sbStore.storage.from('card-images').remove([path]);
   } catch (_) {}
   await sb.from('card_images').delete().eq('id', imgRow.id);
   wrapEl.remove();
@@ -900,13 +901,13 @@ async function uploadFile(file, cardId, strip) {
   setStripLoading(strip, true);
 
   const blob = isGif ? file : await toWebp(file);
-  const { error: upErr } = await sb.storage
+  const { error: upErr } = await sbStore.storage
     .from('card-images')
     .upload(path, blob, { contentType: isGif ? 'image/gif' : 'image/webp', upsert: false });
 
   if (upErr) { toast('Upload failed'); console.error(upErr); setStripLoading(strip, false); return; }
 
-  const { data: { publicUrl } } = sb.storage.from('card-images').getPublicUrl(path);
+  const { data: { publicUrl } } = sbStore.storage.from('card-images').getPublicUrl(path);
   const { count } = await sb.from('card_images')
     .select('*', { count: 'exact', head: true })
     .eq('card_id', cardId);
@@ -1002,7 +1003,7 @@ async function deleteCard(cardId, el) {
         return decodeURIComponent(u.pathname.split('/object/public/card-images/')[1]);
       } catch { return null; }
     }).filter(Boolean);
-    if (paths.length) await sb.storage.from('card-images').remove(paths);
+    if (paths.length) await sbStore.storage.from('card-images').remove(paths);
   }
   await sb.from('card_images').delete().eq('card_id', cardId);
   await sb.from('cards').delete().eq('id', cardId);
