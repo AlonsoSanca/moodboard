@@ -476,6 +476,10 @@ const SUPABASE_URL      = 'https://dodknmljqesspnspiprx.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_m8-Oj2dnAm9OvsVoARKc8Q_yBE1oMcm';
 // ══════════════════════════════════════════════════
 
+if (typeof supabase === 'undefined') {
+  document.body.innerHTML = '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:sans-serif;background:#f9f8f6"><div style="text-align:center;padding:32px"><h2 style="margin:0 0 8px">Could not load app</h2><p style="color:#666;margin:0">A required script failed to load. Check your internet connection and reload.</p></div></div>';
+  throw new Error('supabase SDK not loaded');
+}
 const { createClient } = supabase;
 const sb      = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const sbStore = sb; // storage uses same client; bucket policies allow public access
@@ -534,7 +538,7 @@ window.addEventListener('popstate', () => {
   pid ? loadBoardData(pid) : openHome();
 });
 
-$('home-link').addEventListener('click', e => {
+$('home-link')?.addEventListener('click', e => {
   e.preventDefault();
   navToHome();
 });
@@ -667,15 +671,15 @@ function openProjModal() {
   $('proj-name-input').value = '';
   setTimeout(() => $('proj-name-input').focus(), 50);
 }
-$('modal-cancel').addEventListener('click', () => $('proj-modal').classList.add('hidden'));
-$('proj-modal').addEventListener('click', e => {
+$('modal-cancel')?.addEventListener('click', () => $('proj-modal').classList.add('hidden'));
+$('proj-modal')?.addEventListener('click', e => {
   if (e.target === $('proj-modal')) $('proj-modal').classList.add('hidden');
 });
-$('proj-name-input').addEventListener('keydown', e => {
+$('proj-name-input')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') createProject();
   if (e.key === 'Escape') $('proj-modal').classList.add('hidden');
 });
-$('modal-create').addEventListener('click', createProject);
+$('modal-create')?.addEventListener('click', createProject);
 
 async function createProject() {
   const name = $('proj-name-input').value.trim();
@@ -1263,12 +1267,17 @@ async function imageUrlToBase64(url) {
 
 // ─── boot ─────────────────────────────────────────
 (async function boot() {
-  const pid = getQPid();
-  if (pid) {
-    const { data: proj } = await sb.from('projects').select('name').eq('id', pid).single();
-    if (proj) { openBoard(pid, proj.name); return; }
+  try {
+    const pid = getQPid();
+    if (pid) {
+      const { data: proj } = await sb.from('projects').select('name').eq('id', pid).single();
+      if (proj) { openBoard(pid, proj.name); return; }
+    }
+    openHome();
+  } catch (e) {
+    console.error('boot error:', e);
+    openHome();
   }
-  openHome();
 })();
 </script>
 </body>
