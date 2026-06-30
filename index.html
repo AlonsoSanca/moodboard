@@ -512,6 +512,23 @@ function autoGrow(ta) {
   ta.style.height = ta.scrollHeight + 'px';
 }
 
+function showSaved() { toast('Saved'); }
+
+function debounce(fn, delay) {
+  var timer;
+  return function() {
+    var args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function() { fn.apply(null, args); }, delay);
+  };
+}
+
+var saveCardField = debounce(async function(cardId, field, value) {
+  const { error } = await sb.from('cards').update({ [field]: value }).eq('id', cardId);
+  if (error) console.error('Save failed:', error);
+  else showSaved();
+}, 600);
+
 const IMG_URL_RE = /cloudfront\.net|cloudinary\.com|imgix\.net|frameset\.app|shotdeck\.com/i;
 
 // ─── state ───────────────────────────────────────
@@ -775,10 +792,7 @@ function buildCard(card, images, num) {
       <textarea class="field-ta ${cls}" placeholder="${ph}" rows="1">${esc(card[key])}</textarea>
     `;
     const ta = grp.querySelector('textarea');
-    ta.addEventListener('input', () => autoGrow(ta));
-    ta.addEventListener('change', () => {
-      sb.from('cards').update({ [key]: ta.value }).eq('id', card.id);
-    });
+    ta.addEventListener('input', () => { autoGrow(ta); saveCardField(card.id, key, ta.value); });
     fields.appendChild(grp);
   });
 
